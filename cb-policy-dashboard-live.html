@@ -191,8 +191,6 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
     <select id="range-sel" onchange="onRangeChange()"></select>
     <button class="ctrl-btn active" onclick="filterCat(this,'all')">All events</button>
     <button class="ctrl-btn" onclick="filterCat(this,'cb')">CB decisions</button>
-    <button class="ctrl-btn" onclick="filterCat(this,'cpi')">CPI releases</button>
-    <button class="ctrl-btn" onclick="filterCat(this,'gdp')">GDP prints</button>
     <button class="ctrl-btn" onclick="filterCat(this,'speech')">Speeches</button>
   </div>
 
@@ -314,8 +312,6 @@ const SERIES_DEF = {
 };
 const CAT = {
   cb:    { label:'CB decision', lb:'#dbeafe', lt:'#1e40af', db:'#1e3a5f', dt:'#93c5fd' },
-  cpi:   { label:'CPI release', lb:'#fee2e2', lt:'#991b1b', db:'#5f1f1e', dt:'#fca5a5' },
-  gdp:   { label:'GDP',         lb:'#d1fae5', lt:'#065f46', db:'#064e3b', dt:'#6ee7b7' },
   speech:{ label:'Speech',      lb:'#fef3c7', lt:'#92400e', db:'#5c3a0e', dt:'#fcd34d' },
 };
 
