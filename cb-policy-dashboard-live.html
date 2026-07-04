@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Be Kind, rewind: Central Bank Policy Dashboard</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#f7f6f2; --surface:#ffffff; --surface2:#f0efe9;
+  --border:rgba(0,0,0,0.09); --border-strong:rgba(0,0,0,0.16);
+  --text:#1a1a1e; --text2:#52514e; --text3:#898781;
+  --accent:#2a78d6; --radius:8px;
+  --shadow:0 1px 3px rgba(0,0,0,0.07),0 0 0 0.5px rgba(0,0,0,0.06);
+  --ok:#065f46; --ok-bg:#d1fae5; --err:#991b1b; --err-bg:#fee2e2;
+  --warn:#92400e; --warn-bg:#fef3c7;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#111110; --surface:#1a1a19; --surface2:#222221;
+    --border:rgba(255,255,255,0.08); --border-strong:rgba(255,255,255,0.14);
+    --text:#f5f4f0; --text2:#b0aea5; --text3:#6e6d69; --accent:#3987e5;
+    --ok:#6ee7b7; --ok-bg:#064e3b; --err:#fca5a5; --err-bg:#5f1f1e;
+    --warn:#fcd34d; --warn-bg:#5c3a0e;
+  }
+}
+body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-size:14px; line-height:1.5; padding:24px 20px 48px; max-width:960px; margin:0 auto; }
+
+.header { margin-bottom:16px; border-bottom:0.5px solid var(--border-strong); padding-bottom:14px; display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.header h1 { font-size:17px; font-weight:500; }
+.header p  { font-size:12px; color:var(--text3); margin-top:3px; }
+.sel-wrap  { display:flex; flex-direction:column; gap:4px; }
+.sel-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.05em; }
+select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius:var(--radius); border:0.5px solid var(--border-strong); background:var(--surface); color:var(--text); cursor:pointer; outline:none; min-width:230px; }
+
+.api-bar { display:flex; align-items:center; gap:8px; background:var(--surface); border-radius:var(--radius); padding:8px 12px; box-shadow:var(--shadow); margin-bottom:14px; flex-wrap:wrap; }
+.api-bar label { font-size:11px; color:var(--text3); white-space:nowrap; }
+.api-bar input { font-size:12px; padding:4px 8px; border-radius:var(--radius); border:0.5px solid var(--border-strong); background:var(--bg); color:var(--text); flex:1; min-width:180px; outline:none; font-family:monospace; }
+.api-bar input:focus { border-color:var(--accent); }
+.api-pill { font-size:11px; font-weight:500; padding:3px 10px; border-radius:20px; white-space:nowrap; }
+.api-pill.ok   { background:var(--ok-bg);  color:var(--ok);  }
+.api-pill.err  { background:var(--err-bg); color:var(--err); }
+.api-pill.warn { background:var(--warn-bg);color:var(--warn);}
+.api-pill.idle { background:var(--surface2);color:var(--text3);}
+.icon-btn { font-size:11px; padding:4px 10px; border-radius:var(--radius); border:0.5px solid var(--border-strong); background:var(--surface); color:var(--text2); cursor:pointer; white-space:nowrap; }
+.icon-btn:hover { background:var(--surface2); }
+
+/* setup / loading */
+.setup-card { background:var(--surface); border-radius:12px; padding:24px 28px; box-shadow:var(--shadow); margin-bottom:14px; }
+.setup-card h2 { font-size:15px; font-weight:500; margin-bottom:16px; }
+.check-row { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-top:0.5px solid var(--border); }
+.check-row:first-of-type { border-top:none; }
+.check-icon { font-size:15px; margin-top:1px; flex-shrink:0; }
+.check-label { font-size:13px; font-weight:500; }
+.check-detail { font-size:12px; color:var(--text2); margin-top:3px; line-height:1.5; }
+.check-fix { font-size:12px; margin-top:6px; padding:8px 12px; background:var(--bg); border-radius:var(--radius); border-left:3px solid var(--accent); color:var(--text2); line-height:1.6; }
+.check-fix code,.step-list code { font-family:monospace; background:var(--surface2); padding:1px 5px; border-radius:4px; font-size:11px; color:var(--text); }
+.step-list { margin:0; padding-left:18px; }
+.step-list li { margin-top:5px; font-size:12px; color:var(--text2); line-height:1.5; }
+.retry-btn { display:inline-block; margin-top:14px; font-size:12px; padding:6px 16px; border-radius:var(--radius); border:0.5px solid var(--accent); background:var(--bg); color:var(--accent); cursor:pointer; }
+
+.loading-card { background:var(--surface); border-radius:12px; padding:40px 20px; text-align:center; box-shadow:var(--shadow); margin-bottom:14px; }
+.spinner { display:inline-block; width:22px; height:22px; border:2px solid var(--border-strong); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; margin-bottom:10px; }
+@keyframes spin { to{transform:rotate(360deg);} }
+.loading-card p { color:var(--text2); font-size:13px; }
+
+/* kpi */
+.kpi-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:16px; }
+.kpi { background:var(--surface); border-radius:var(--radius); padding:12px 14px; box-shadow:var(--shadow); }
+.kpi-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.04em; }
+.kpi-val { font-size:21px; font-weight:500; margin-top:2px; font-variant-numeric:tabular-nums; }
+.kpi-sub { font-size:11px; color:var(--text3); margin-top:2px; }
+
+/* controls */
+.controls { display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-bottom:12px; }
+.controls select { font-size:12px; padding:5px 10px; border-radius:var(--radius); border:0.5px solid var(--border-strong); background:var(--surface); color:var(--text); cursor:pointer; outline:none; }
+.ctrl-btn { font-size:12px; padding:5px 11px; border-radius:var(--radius); border:0.5px solid var(--border-strong); background:var(--surface); color:var(--text2); cursor:pointer; outline:none; }
+.ctrl-btn.active { background:#dbeafe; color:#1e40af; border-color:#93c5fd; }
+@media (prefers-color-scheme:dark){.ctrl-btn.active{background:#1e3a5f;color:#93c5fd;border-color:#1e4a8f;}}
+.ctrl-btn:hover:not(.active){background:var(--surface2);}
+
+/* legend */
+.legend { display:flex; flex-wrap:wrap; gap:16px; margin-bottom:10px; }
+.leg-item { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); cursor:pointer; user-select:none; transition:opacity 0.2s; }
+.leg-item.dim { opacity:0.3; }
+.leg-line { width:18px; height:3px; border-radius:2px; }
+
+/* ── unified chart+timeline panel ── */
+.chart-panel { background:var(--surface); border-radius:12px; box-shadow:var(--shadow); margin-bottom:14px; padding:16px 16px 0 16px; position:relative; }
+/* chart canvas */
+.chart-wrap { position:relative; width:100%; height:280px; }
+/* timeline strip sits directly below the chart, same horizontal extent */
+.timeline-strip {
+  position:relative; width:100%; overflow:hidden;
+  border-top:1px solid var(--border-strong);
+  margin-top:0; padding-bottom:14px;
+}
+.timeline-inner {
+  position:relative; width:100%; min-height:70px; height:70px;
+  /* JS positions absolute flags inside here — sized by animation.onComplete */
+}
+.tl-label { font-size:10px; color:var(--text3); letter-spacing:0.05em; text-transform:uppercase; padding:7px 0 4px; }
+
+/* event flags — positioned absolutely by JS */
+.ev-flag {
+  position:absolute; top:0; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center;
+  cursor:pointer; z-index:2;
+}
+.ev-flag .ev-line {
+  width:1px; height:22px;
+  background:currentColor; opacity:0.5;
+}
+.ev-flag .ev-chip {
+  font-size:9px; font-weight:600; border-radius:4px; padding:2px 6px;
+  white-space:nowrap; margin-top:2px; max-width:80px;
+  overflow:hidden; text-overflow:ellipsis; text-align:center;
+}
+.ev-flag:hover .ev-chip { filter:brightness(1.08); }
+/* highlighted flag (on chart hover) */
+.ev-flag.highlighted .ev-line { opacity:1; height:26px; }
+.ev-flag.highlighted .ev-chip { box-shadow:0 0 0 1.5px currentColor; }
+
+/* vertical crosshair line drawn by JS over chart area */
+#crosshair {
+  position:absolute; top:0; width:1px; pointer-events:none;
+  background:var(--border-strong); display:none; z-index:3;
+}
+
+/* detail card */
+.detail-card { background:var(--surface); border-radius:12px; padding:14px 16px; box-shadow:var(--shadow); margin-bottom:14px; display:none; }
+.detail-top { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; }
+.detail-title { font-size:14px; font-weight:500; }
+.detail-date { font-size:11px; color:var(--text3); margin-top:2px; }
+.detail-body { font-size:13px; color:var(--text2); margin-top:10px; line-height:1.6; }
+.badge { font-size:10px; font-weight:500; border-radius:20px; padding:3px 10px; white-space:nowrap; }
+
+.footer-note { font-size:11px; color:var(--text3); margin-top:20px; border-top:0.5px solid var(--border); padding-top:12px; }
+@media (max-width:600px){.kpi-row{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1 id="cb-title">Central Bank Policy Dashboard</h1>
+    <p id="cb-subtitle">Policy rate · CPI · 2Y &amp; 10Y yields · live data</p>
+  </div>
+  <div class="sel-wrap">
+    <div class="sel-label">Select central bank</div>
+    <select class="cb-sel" id="cb-sel" onchange="switchCB(this.value)">
+      <optgroup label="Major Central Banks">
+        <option value="fed">🇺🇸 Federal Reserve (Fed)</option>
+        <option value="ecb">🇪🇺 European Central Bank (ECB)</option>
+        <option value="boe">🇬🇧 Bank of England (BoE)</option>
+        <option value="boj">🇯🇵 Bank of Japan (BoJ)</option>
+      </optgroup>
+      <optgroup label="CEE Region">
+        <option value="pol" selected>🇵🇱 Poland (NBP)</option>
+        <option value="hun">🇭🇺 Hungary (MNB)</option>
+        <option value="rom">🇷🇴 Romania (BNR)</option>
+        <option value="cze">🇨🇿 Czech Republic (CNB)</option>
+      </optgroup>
+    </select>
+  </div>
+</div>
+
+<div class="api-bar">
+  <label for="api-url">API</label>
+  <input type="text" id="api-url" value="http://localhost:5000"/>
+  <span class="api-pill idle" id="api-pill">checking…</span>
+  <button class="icon-btn" onclick="connectAndLoad()">↻ reconnect</button>
+  <button class="icon-btn" onclick="forceRefresh()">⟳ refresh data</button>
+</div>
+
+<div id="setup-card" class="setup-card" style="display:none">
+  <h2 id="setup-title">Getting started</h2>
+  <div id="setup-checks"></div>
+  <button class="retry-btn" onclick="connectAndLoad()">↻ Try again</button>
+</div>
+
+<div id="loading-card" class="loading-card" style="display:none">
+  <div class="spinner"></div>
+  <p id="loading-msg">Fetching live data…</p>
+</div>
+
+<div id="main-content" style="display:none">
+  <div class="kpi-row" id="kpi-row"></div>
+
+  <div class="controls">
+    <select id="range-sel" onchange="onRangeChange()"></select>
+    <button class="ctrl-btn active" onclick="filterCat(this,'all')">All events</button>
+    <button class="ctrl-btn" onclick="filterCat(this,'cb')">CB decisions</button>
+    <button class="ctrl-btn" onclick="filterCat(this,'cpi')">CPI releases</button>
+    <button class="ctrl-btn" onclick="filterCat(this,'gdp')">GDP prints</button>
+    <button class="ctrl-btn" onclick="filterCat(this,'speech')">Speeches</button>
+  </div>
+
+  <!-- unified chart + timeline panel -->
+  <div class="chart-panel" id="chart-panel">
+    <div class="legend" id="legend"></div>
+    <div class="chart-wrap" id="chart-wrap">
+      <canvas id="mainChart" role="img" aria-label="Central bank policy dashboard chart"></canvas>
+      <div id="crosshair"></div>
+    </div>
+    <div class="timeline-strip">
+      <div class="tl-label">Event timeline — click any flag to read context</div>
+      <div class="timeline-inner" id="timeline-inner"></div>
+    </div>
+  </div>
+
+  <div class="detail-card" id="detail-card"></div>
+</div>
+
+<div class="footer-note">
+  Live data: FRED (St. Louis Fed) · ECB Data Portal. Events are curated and illustrative. Not financial advice.
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ══════════════════════════════════════════════
+   STATIC EVENT DATA  (EVENTS_DB)
+   To edit: find the central bank key below and
+   add/remove objects in the array.
+   Each event: { d:'YYYY-MM', cat:'cb|cpi|gdp|speech', title:'...', body:'...' }
+══════════════════════════════════════════════ */
+const EVENTS_DB = {
+  fed:[
+    {d:'2021-04',cat:'speech',title:'Powell: inflation "transitory"',body:'Fed Chair Powell repeatedly used the word "transitory" to describe rising prices, arguing supply-chain disruptions would resolve quickly. This framing delayed the hiking cycle and became one of the most criticised Fed communications in decades.'},
+    {d:'2021-11',cat:'cb',title:'Taper announced',body:'The FOMC signalled it would begin tapering its $120bn/month QE programme. While not a rate hike, this was the first withdrawal of accommodation. 2Y yields rose 15bp as markets priced an earlier liftoff.'},
+    {d:'2022-01',cat:'cpi',title:'CPI: 7.5% — 40-year high',body:'US CPI hit 7.5% YoY, a level not seen since 1982. Markets priced 7 rate hikes for 2022. The 2Y yield surged 20bp on the day.'},
+    {d:'2022-03',cat:'cb',title:'Liftoff: +25bp',body:'First rate hike since 2018, initiating the most aggressive tightening cycle in 40 years. Chair Powell signalled the committee was prepared to move at every meeting if needed.'},
+    {d:'2022-06',cat:'cb',title:'+75bp — first jumbo hike',body:'Largest single hike since 1994 after May CPI surprised at 8.6%. The 10Y yield briefly hit 3.5%, a level not seen since 2011.'},
+    {d:'2022-10',cat:'cpi',title:'CPI: 8.2% — still elevated',body:'Despite five hikes totalling 300bp, CPI remained near the cycle high. Core CPI hit 6.6% — the highest since 1982 — proving inflation had broadened beyond energy.'},
+    {d:'2022-12',cat:'cb',title:'Downshift to +50bp',body:'The Fed slowed after four consecutive 75bp hikes. Powell introduced the concept of a "sufficiently restrictive" terminal rate. Dot plot projections rose to 5.1%.'},
+    {d:'2023-05',cat:'cb',title:'Final hike → 5.25%',body:'What turned out to be the terminal rate of the cycle. The statement removed language about "additional policy firming may be appropriate", signalling the hiking cycle was effectively over.'},
+    {d:'2023-10',cat:'speech',title:'Powell: "higher for longer"',body:'At an IMF event, Powell reinforced the Fed was not yet confident inflation was returning to 2%. The 10Y yield broke above 5% for the first time since 2007.'},
+    {d:'2024-09',cat:'cb',title:'First cut: −50bp',body:"Fed opened the easing cycle with a larger-than-expected 50bp cut. Powell called it a 'recalibration', not an emergency move. Equities rallied strongly."},
+    {d:'2024-12',cat:'cb',title:'−25bp · hawkish cut',body:'Third cut but the dot plot showed only two more in 2025 — fewer than expected. Powell said the Fed could be "more cautious" going forward. Yields rose sharply.'},
+  ],
+  ecb:[
+    {d:'2021-12',cat:'cpi',title:'HICP: 5.0% — record',body:"Euro area inflation hit 5.0% — highest since the euro's creation — driven by energy costs up 26% YoY. The ECB still projected inflation would fall below 2% in 2022."},
+    {d:'2022-02',cat:'speech',title:'Lagarde U-turn',body:'Lagarde refused to repeat that a 2022 hike was "very unlikely." German 2Y yields rose 20bp on the day as markets repriced the entire path.'},
+    {d:'2022-07',cat:'cb',title:'Liftoff: +50bp — end of negative rates',body:'First ECB hike in 11 years, and larger than pre-committed 25bp. Simultaneously the TPI (Transmission Protection Instrument) was launched to cap peripheral spread widening.'},
+    {d:'2022-09',cat:'cb',title:'+75bp — largest ever ECB hike',body:'Largest single hike in ECB history as HICP hit 10.0%. BTP-Bund spreads widened to 250bp, testing the new TPI backstop.'},
+    {d:'2022-11',cat:'cpi',title:'HICP: 10.6% — peak',body:'Euro area inflation peaked at 10.6%, driven by energy (41.5% YoY) and food (13.1% YoY). Core hit 5.0%.'},
+    {d:'2023-09',cat:'cb',title:'+25bp → 4.50% — terminal rate',body:'Markets correctly interpreted this as the last hike. The statement said rates were "sufficiently restrictive" — a new phrase signalling the plateau had been reached.'},
+    {d:'2024-06',cat:'cb',title:'First cut: −25bp → 4.25%',body:'First ECB cut since 2019. Lagarde stressed this was not the start of a linear easing cycle and future decisions would be fully data-dependent.'},
+    {d:'2024-12',cat:'cb',title:'−25bp → 3.15%',body:'Fourth cut of the year. Lagarde dropped all remaining hawkish language, projecting inflation returning sustainably to 2% by mid-2025.'},
+  ],
+  boe:[
+    {d:'2021-12',cat:'cb',title:'First G10 hike: +15bp',body:'Bank of England became the first G10 central bank to raise rates in the post-pandemic cycle. Governor Bailey cited labour market tightness and persistent goods inflation.'},
+    {d:'2022-04',cat:'cpi',title:'CPI: 9.0% — 40-year high',body:'UK inflation surged to 9.0% driven by the Ofgem energy price cap increase (+54%). The BoE faced the uncomfortable combination of high inflation and slowing growth.'},
+    {d:'2022-09',cat:'speech',title:'"Mini-budget" gilt crisis',body:"Kwarteng's unfunded tax cuts sent 30Y gilt yields up 150bp in days. The BoE had to buy gilts to prevent pension fund LDI strategies from collapsing — a financial stability emergency."},
+    {d:'2022-10',cat:'cpi',title:'CPI: 11.1% — highest since 1981',body:'UK inflation peaked at 11.1%. Food inflation at 16.4%, triggering a severe cost-of-living crisis. Real wages fell sharply across the economy.'},
+    {d:'2022-11',cat:'cb',title:'+75bp — largest since 1989',body:'The BoE explicitly pushed back against market pricing of rates above 5%, causing a significant gilt rally — a rare example of a CB capping rate expectations mid-cycle.'},
+    {d:'2023-06',cat:'cb',title:'Shock +50bp → 5.00%',body:'Surprise 50bp hike after May CPI came in at 8.7%, well above forecast. Core inflation accelerated to 7.1%. 2Y gilt yields hit 5.5%.'},
+    {d:'2024-06',cat:'cpi',title:'CPI: 2.0% — at target',body:'UK CPI reached 2.0% for the first time since 2021. MPC held at 5.25% as services inflation remained sticky at 5.7%.'},
+    {d:'2024-08',cat:'cb',title:'First cut: −25bp → 5.00%',body:'Narrow 5-4 MPC vote. Governor Bailey said the decision was "finely balanced". Services inflation still above 5% kept the MPC cautious about the pace of easing.'},
+  ],
+  boj:[
+    {d:'2022-06',cat:'cpi',title:'CPI: 2.4% — above target',body:'BoJ characterised the rise as externally-driven and maintained ultra-easy policy and Yield Curve Control. Governor Kuroda dismissed calls to normalise policy.'},
+    {d:'2022-09',cat:'speech',title:'MoF: ¥144/USD intervention',body:'Ministry of Finance bought yen for the first time since 1998 as the policy divergence between the BoJ and the Fed weakened JPY sharply, adding imported inflation.'},
+    {d:'2022-12',cat:'cb',title:'YCC band widened ±0.25%→±0.50%',body:'BoJ shocked markets by widening the Yield Curve Control band. Yen rallied 3%; JGB yields immediately jumped to the new cap. Widely seen as a stealth pivot.'},
+    {d:'2023-07',cat:'cb',title:'YCC loosened — 1.0% soft cap',body:'BoJ made the 0.50% ceiling a reference rate rather than a hard limit, allowing 10Y yields to drift toward 1.0%. Another step toward eventual policy exit.'},
+    {d:'2024-03',cat:'cb',title:'Negative rates end, YCC abandoned',body:'First BoJ hike since 2007. Governor Ueda cited sustainable progress toward 2% backed by wage growth above 5%. Historic end to the world\'s last negative rate policy.'},
+    {d:'2024-07',cat:'cb',title:'+15bp → 0.25% — carry trade unwind',body:'Second hike triggered a violent carry-trade unwind. USD/JPY fell from 160 to 142 in weeks; the Nikkei dropped 12% in a single day — its worst fall since 1987.'},
+  ],
+  pol:[
+    {d:'2021-10',cat:'cb',title:'First hike: +40bp → 0.50%',body:'MPC surprised markets. Glapiński had signalled rates would stay at 0.1% well into 2022 — the move was a pivot shock. 2Y yields jumped 80bp on the day.'},
+    {d:'2022-01',cat:'cpi',title:'CPI: 9.4% — 20-year high',body:'Energy and food each contributed ~4pp. Terminal rate expectations shifted above 5% for the first time. The 10Y yield crossed 4%.'},
+    {d:'2022-03',cat:'cb',title:'+75bp → 3.50% — war shock',body:"Russia's invasion of Ukraine sent commodity prices surging. MPC accelerated tightening significantly."},
+    {d:'2022-05',cat:'cb',title:'+75bp → 5.25%',body:'PLN depreciation was adding imported inflation on top of domestic drivers — a self-reinforcing dynamic the MPC explicitly flagged.'},
+    {d:'2022-09',cat:'cpi',title:'CPI: 17.2%',body:'September print hinted the peak was near. Government energy price caps began to partially mask underlying pressures in the headline figure.'},
+    {d:'2023-02',cat:'cpi',title:'CPI: 18.4% — true peak',body:'Core CPI remained sticky above 12%, complicating the case for cuts that some on the MPC were beginning to make publicly.'},
+    {d:'2023-08',cat:'cb',title:'First cut: −75bp — shock',body:'75bp vs. 25bp consensus. Critics argued it was premature with elections approaching. PLN weakened 1.5% vs EUR immediately after the decision.'},
+    {d:'2023-09',cat:'cb',title:'−25bp → 5.75%',body:'Smaller follow-up cut. MPC said pace would be gradual and data-dependent. Curve steepened as markets priced fewer cuts than initially feared.'},
+    {d:'2024-09',cat:'speech',title:'Glapiński: cuts delayed to 2025',body:'Ruled out further cuts in 2024, citing energy price pass-through and wage growth running above 10%. Bond yields rose 20–25bp across the curve.'},
+  ],
+  hun:[
+    {d:'2021-06',cat:'cb',title:'First CEE hike: +30bp',body:'MNB was the first CEE central bank to raise rates, acting well ahead of the ECB and Fed. Governor Matolcsy cited HUF depreciation and rising inflation expectations.'},
+    {d:'2022-10',cat:'cpi',title:'CPI: 21.1% — highest in EU',body:'Food inflation reached 43% YoY. Government price caps distorted the headline but could not stop the underlying surge. Hungary faced an acute cost-of-living crisis.'},
+    {d:'2023-02',cat:'cpi',title:'CPI: 25.7% — peak',body:'February 25.7% confirmed the cycle peak. MNB held at 13% while inflation began its descent. The pace of disinflation would prove faster than most expected.'},
+    {d:'2023-08',cat:'cb',title:'Cutting cycle: −100bp',body:'MNB began cutting in large steps as disinflation proved faster than expected. The HUF stabilised around 380/EUR, giving the MPC cover to ease aggressively.'},
+    {d:'2023-12',cat:'cpi',title:'CPI: 5.5% — rapid fall',body:'From 25.7% to 5.5% in ten months — one of the fastest disinflation episodes in emerging Europe. The MNB projected a return to the 3% target in 2024 H1.'},
+    {d:'2024-09',cat:'speech',title:'MNB signals pause',body:'HUF weakness (400+/EUR) and fiscal deficit concerns prompted the MNB to signal a potential pause in cutting. Real rates remained positive, cushioning the currency.'},
+  ],
+  rom:[
+    {d:'2021-10',cat:'cb',title:'Hike cycle starts: +25bp',body:"BNR began gradually. Governor Isărescu maintained the bank's long tradition of cautious, gradualist policy-making."},
+    {d:'2022-05',cat:'cpi',title:'CPI: 13.8%',body:'Food inflation exceeded 20% YoY — the highest in the EU. Romania had limited fiscal capacity to subsidise energy unlike larger western peers.'},
+    {d:'2022-12',cat:'cpi',title:'CPI: 16.4% — peak',body:"BNR's terminal rate of 7.00% was the highest in post-communist Romanian history. The BNR signalled it would hold there until disinflation was firmly established."},
+    {d:'2023-02',cat:'cb',title:'Terminal: 7.00% — BNR holds',body:'Unlike peers, BNR resisted cutting in 2023, citing high twin deficits (fiscal and current account) and sticky core inflation above 6%.'},
+    {d:'2023-06',cat:'gdp',title:'GDP: +2.8% — fastest in EU',body:'Strong wage growth and EU fund absorption drove outperformance despite elevated inflation — a stagflationary mix that kept the BNR on hold.'},
+    {d:'2024-07',cat:'cb',title:'First cut: −25bp — last in CEE',body:'The last major CEE central bank to start cutting. Core CPI still above 6% and Romania\'s election calendar added uncertainty to the outlook.'},
+  ],
+  cze:[
+    {d:'2021-06',cat:'cb',title:'CNB: first to hike in CEE',body:'Czech National Bank raised rates while the ECB and Fed were still running full-scale QE programmes. Domestic demand and a tight labour market drove the early move.'},
+    {d:'2021-11',cat:'cb',title:'+125bp — largest in CNB history',body:'Largest single CNB hike in modern history. Governor Rusnok said the board had to "be ahead of the curve." The CZK strengthened significantly on the day.'},
+    {d:'2022-07',cat:'cb',title:'+125bp → 7.00% — highest since 1999',body:'CNB reached 7.00%. New Governor Michl — previously a noted dove — had voted against this final hike. It marked the top of the cycle.'},
+    {d:'2022-09',cat:'cpi',title:'CPI: 18.0% — peak',body:'Czech inflation peaked near 18%. CNB FX interventions to support the CZK limited imported inflation relative to PLN and HUF.'},
+    {d:'2023-06',cat:'gdp',title:'GDP: −0.5% — mild recession',body:'Only CEE country in recession in 2023 H1. Weak German demand hit Czech manufacturing exports hard, with Germany accounting for ~35% of Czech exports.'},
+    {d:'2023-12',cat:'cb',title:'First cut: −25bp',body:'Fastest disinflation in the CEE region. CNB was the first CEE bank to start cutting in this cycle, led by the newly dovish Governor Michl.'},
+    {d:'2024-09',cat:'cb',title:'−75bp — largest cut of cycle',body:'Most aggressive single cut among CEE peers. CPI was sustainably near the 2% target. CNB signalled it was approaching the neutral rate range of 3–4%.'},
+  ],
+};
+
+/* ══════════ COLOURS ══════════ */
+const SERIES_DEF = {
+  rate:{ label:'Policy rate',    lc:'#2a78d6', dc:'#3987e5' },
+  cpi: { label:'CPI inflation',  lc:'#d03030', dc:'#e66767' },
+  y2:  { label:'2Y / ST yield',  lc:'#1baf7a', dc:'#1baf7a' },
+  y10: { label:'10Y bond yield', lc:'#c98500', dc:'#eda100' },
+  fx:  { label:'FX rate',        lc:'#7c3aed', dc:'#a78bfa', axis:'right' },
+};
+const CAT = {
+  cb:    { label:'CB decision', lb:'#dbeafe', lt:'#1e40af', db:'#1e3a5f', dt:'#93c5fd' },
+  cpi:   { label:'CPI release', lb:'#fee2e2', lt:'#991b1b', db:'#5f1f1e', dt:'#fca5a5' },
+  gdp:   { label:'GDP',         lb:'#d1fae5', lt:'#065f46', db:'#064e3b', dt:'#6ee7b7' },
+  speech:{ label:'Speech',      lb:'#fef3c7', lt:'#92400e', db:'#5c3a0e', dt:'#fcd34d' },
+};
+
+/* ══════════ STATE ══════════ */
+let currentCB   = 'pol';
+let currentData = [];
+let currentMeta = null;
+let chart       = null;
+let hiddenSeries = new Set();
+let activeFilter = 'all';
+let currentEvents = [];  // all events for current CB (dynamic or static)
+let activeEvents  = [];  // events currently shown (after category filter)
+
+const isDark = () => window.matchMedia('(prefers-color-scheme:dark)').matches;
+const catStyle = cat => {
+  const c = CAT[cat] || CAT.cb;
+  return isDark() ? {bg:c.db, text:c.dt, label:c.label} : {bg:c.lb, text:c.lt, label:c.label};
+};
+const seriesColor = k => isDark() ? SERIES_DEF[k].dc : SERIES_DEF[k].lc;
+const apiBase = () => (document.getElementById('api-url').value||'http://localhost:5000').replace(/\/$/,'');
+
+/* ══════════ UI helpers ══════════ */
+function showLoading(msg) {
+  document.getElementById('setup-card').style.display   = 'none';
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('loading-card').style.display = 'block';
+  document.getElementById('loading-msg').textContent    = msg;
+}
+function showMain() {
+  document.getElementById('setup-card').style.display   = 'none';
+  document.getElementById('loading-card').style.display = 'none';
+  document.getElementById('main-content').style.display = 'block';
+}
+function setPill(state, text) {
+  const p = document.getElementById('api-pill');
+  p.className = 'api-pill ' + state;
+  p.textContent = text;
+}
+
+/* ══════════ SETUP GUIDE ══════════ */
+function showSetupGuide(health) {
+  document.getElementById('loading-card').style.display = 'none';
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('setup-card').style.display   = 'block';
+  const checks = health?.checks || {};
+  const fredOk = checks.fred_key?.ok;
+  document.getElementById('setup-title').textContent = health
+    ? (fredOk ? '⚠ Almost ready' : '🔑 Setup required')
+    : '⚠ Cannot reach the API server';
+  let html = '';
+  if (!health) {
+    html += row('err','Server not running',
+      `The API server is not running at <code>${apiBase()}</code>.`,
+      `<strong>Start it in a terminal:</strong><br>
+       <code>cd cb-api</code><br>
+       <code>source venv/bin/activate</code><br>
+       <code>python app.py</code><br>
+       Then click <em>↻ reconnect</em> above.`);
+    html += row('info','Quick setup','',
+      `<ol class="step-list">
+        <li>Install: <code>pip install -r requirements.txt</code></li>
+        <li>Copy env: <code>cp .env.example .env</code></li>
+        <li>Get a free FRED key at <strong>fred.stlouisfed.org/docs/api/api_key.html</strong> and paste into <code>.env</code></li>
+        <li>Run: <code>python app.py</code></li>
+        <li>Serve this file: <code>python3 -m http.server 8080</code> → open <code>http://localhost:8080</code></li>
+      </ol>`);
+  } else {
+    if (!fredOk) {
+      html += row('err','FRED API key missing', checks.fred_key?.message||'',
+        `1. Get a free key at <strong>fred.stlouisfed.org/docs/api/api_key.html</strong><br>
+         2. Open <code>.env</code> and add: <code>FRED_API_KEY=your_key</code><br>
+         3. Restart: <code>python app.py</code>`);
+    } else {
+      html += row('ok','FRED API key','Key is configured correctly');
+    }
+    for (const [k,name] of [['fred','FRED'],['ecb','ECB Data Portal'],['eurostat','Eurostat']]) {
+      if (checks[k]) html += row(checks[k].ok?'ok':'err', name, checks[k].message);
+    }
+  }
+  document.getElementById('setup-checks').innerHTML = html;
+}
+
+function row(type, label, detail='', fix='') {
+  const icons={ok:'✓',err:'✗',warn:'⚠',info:'ℹ'};
+  const colors={ok:'var(--ok)',err:'var(--err)',warn:'var(--warn)',info:'var(--accent)'};
+  return `<div class="check-row">
+    <div class="check-icon" style="color:${colors[type]}">${icons[type]||'•'}</div>
+    <div>
+      <div class="check-label">${label}</div>
+      ${detail?`<div class="check-detail">${detail}</div>`:''}
+      ${fix?`<div class="check-fix">${fix}</div>`:''}
+    </div>
+  </div>`;
+}
+
+/* ══════════ CONNECTION ══════════ */
+async function connectAndLoad() {
+  setPill('idle','checking…');
+  showLoading('Connecting to API…');
+  let health = null;
+  try {
+    const r = await fetch(`${apiBase()}/api/health`, {signal:AbortSignal.timeout(5000)});
+    health = await r.json();
+  } catch(_) {
+    setPill('err','unreachable');
+    showSetupGuide(null);
+    return;
+  }
+  if (!health.ok) {
+    setPill('err','setup needed');
+    showSetupGuide(health);
+    return;
+  }
+  setPill('ok','connected');
+  await switchCB(currentCB);
+}
+
+/* ══════════ DATA ══════════ */
+async function fetchData(cbKey, forceRefresh=false) {
+  const url = `${apiBase()}/api/data/${cbKey}${forceRefresh?'?refresh=1':''}`;
+  const r = await fetch(url, {signal:AbortSignal.timeout(30000)});
+  if (!r.ok) {
+    const e = await r.json().catch(()=>({error:r.statusText}));
+    throw new Error(e.error||r.statusText);
+  }
+  return r.json();
+}
+
+/* ══════════ RENDER: KPI ══════════ */
+function buildKPI(meta) {
+  if (!currentData.length) return;
+  const last=currentData[currentData.length-1], first=currentData[0];
+  const fv = v => v!=null ? v.toFixed(2)+'%' : 'n/a';
+  const items = [
+    {label:'Policy rate',    val:fv(last.rate), sub:`from ${fv(first.rate)} at start`,   color:seriesColor('rate')},
+    {label:'CPI (latest)',   val:fv(last.cpi),  sub:`target: ${meta.cpi_target}%`,       color:seriesColor('cpi')},
+    {label:'2Y bond yield',  val:fv(last.y2),   sub:last.y2!=null&&last.rate!=null?`${(last.y2-last.rate).toFixed(2)}pp spread to rate`:'', color:seriesColor('y2')},
+    {label:'10Y bond yield', val:fv(last.y10),  sub:last.y10!=null&&last.y2!=null?`${(last.y10-last.y2).toFixed(2)}pp slope`:'', color:seriesColor('y10')},
+  ];
+  if (last.fx != null) {
+    const fxLabel = currentMeta?.fx_label || SERIES_DEF.fx.label;
+    items.push({label: fxLabel, val: last.fx.toFixed(4), sub: `from ${first.fx!=null?first.fx.toFixed(4):'n/a'} at start`, color: seriesColor('fx')});
+  }
+  document.getElementById('kpi-row').innerHTML = items.map(k=>
+    `<div class="kpi"><div class="kpi-label">${k.label}</div><div class="kpi-val" style="color:${k.color}">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`
+  ).join('');
+}
+
+/* ══════════ RENDER: LEGEND ══════════ */
+function buildLegend() {
+  document.getElementById('legend').innerHTML = Object.entries(SERIES_DEF)
+    .filter(([k]) => k !== 'fx' || currentData.some(r => r.fx != null))
+    .map(([k,v]) => {
+      const label = k === 'fx' ? (currentMeta?.fx_label || v.label) : v.label;
+      return `<div class="leg-item${hiddenSeries.has(k)?' dim':''}" id="leg-${k}" onclick="toggleSeries('${k}')">
+        <span class="leg-line" style="background:${seriesColor(k)}"></span><span>${label}</span>
+      </div>`;
+    }).join('');
+}
+
+/* ══════════ RENDER: CHART ══════════ */
+let _mouseWired = false;
+
+function buildChart(data) {
+  const canvas = document.getElementById('mainChart');
+  if (chart) { chart.destroy(); chart=null; }
+  _mouseWired = false;
+
+  const dark=isDark(), gridCol=dark?'#2c2c2a':'#e1e0d9', tickCol=dark?'#898781':'#888780';
+  const hasFX = data.some(r => r.fx != null);
+
+  // Left axis: rate / cpi / y2 / y10
+  let ymax=0;
+  data.forEach(r => ['rate','cpi','y2','y10'].forEach(k=>{if(r[k]!=null&&r[k]>ymax)ymax=r[k];}));
+  ymax=Math.ceil(ymax/5)*5+2;
+
+  // Right axis: fx — auto-range with a 5% padding
+  let fxMin=Infinity, fxMax=-Infinity;
+  if (hasFX) data.forEach(r=>{ if(r.fx!=null){ fxMin=Math.min(fxMin,r.fx); fxMax=Math.max(fxMax,r.fx); }});
+  const fxPad = hasFX ? (fxMax-fxMin)*0.1 || fxMax*0.05 : 0;
+
+  const fxLabel = currentMeta?.fx_label || SERIES_DEF.fx.label;
+  const ds = k => ({
+    seriesKey:k,
+    label: k === 'fx' ? fxLabel : SERIES_DEF[k].label,
+    data: data.map(r=>r[k]),
+    borderColor:seriesColor(k), backgroundColor:seriesColor(k)+'15',
+    borderWidth: k === 'fx' ? 1.5 : 2,
+    pointRadius:0, pointHoverRadius:5, tension:0.25,
+    hidden: hiddenSeries.has(k) || (k === 'fx' && !hasFX),
+    spanGaps:true,
+    yAxisID: SERIES_DEF[k].axis === 'right' ? 'yRight' : 'y',
+  });
+  chart = new Chart(canvas,{
+    type:'line',
+    data:{labels:data.map(r=>r.date), datasets:Object.keys(SERIES_DEF).map(ds)},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:dark?'#1a1a19':'#fff',
+          borderColor:dark?'#2c2c2a':'#e1e0d9', borderWidth:1,
+          titleColor:dark?'#f5f4f0':'#1a1a1e', bodyColor:dark?'#b0aea5':'#52514e', padding:10,
+          callbacks:{
+            label:c=>{
+              if(c.parsed.y==null) return '  '+c.dataset.label+': n/a';
+              const isFx = SERIES_DEF[c.dataset.seriesKey]?.axis === 'right';
+              const val  = isFx ? c.parsed.y.toFixed(4) : c.parsed.y.toFixed(2)+'%';
+              return '  '+c.dataset.label+': '+val;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{grid:{color:gridCol,lineWidth:0.5},ticks:{color:tickCol,font:{size:11},maxTicksLimit:14},border:{color:gridCol}},
+        y:{grid:{color:gridCol,lineWidth:0.5},ticks:{color:tickCol,font:{size:11},callback:v=>v.toFixed(0)+'%'},border:{color:gridCol},min:0,max:ymax},
+        yRight:{
+          type:'linear', position:'right', display: hasFX ? true : false,
+          min: hasFX ? fxMin-fxPad : undefined,
+          max: hasFX ? fxMax+fxPad : undefined,
+          grid:{drawOnChartArea:false},
+          ticks:{color:seriesColor('fx'),font:{size:11},
+            callback:v => v >= 100 ? v.toFixed(2) : v >= 10 ? v.toFixed(3) : v.toFixed(4)},
+          border:{color:gridCol},
+        }
+      }
+    },
+    plugins:[{
+      id:'timelineSync',
+      afterRender(chartInst) {
+        // afterRender fires after Chart.js has painted to canvas.
+        // Defer one tick so the browser has committed the layout.
+        setTimeout(() => {
+          buildTimeline(activeEvents);
+          if (!_mouseWired) {
+            wireMouseEvents(chartInst.canvas);
+            _mouseWired = true;
+          }
+        }, 0);
+      }
+    }]
+  });
+}
+
+function wireMouseEvents(canvas) {
+  const crosshair = document.getElementById('crosshair');
+  canvas.addEventListener('mousemove', evt => {
+    if (!chart) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = evt.clientX - rect.left;
+    crosshair.style.display = 'block';
+    crosshair.style.left    = x + 'px';
+    crosshair.style.top     = '0px';
+    crosshair.style.height  = rect.height + 'px';
+    const meta0 = chart.getDatasetMeta(0);
+    if (!meta0 || !meta0.data.length) return;
+    let nearest = 0, minDist = Infinity;
+    meta0.data.forEach((pt, i) => {
+      const d = Math.abs(pt.x - x);
+      if (d < minDist) { minDist = d; nearest = i; }
+    });
+    highlightEventFlag(chart.data.labels[nearest]);
+  });
+  canvas.addEventListener('mouseleave', () => {
+    crosshair.style.display = 'none';
+    highlightEventFlag(null);
+  });
+}
+
+/* ══════════ RENDER: TIMELINE (linked to chart x-axis) ══════════ */
+function buildTimeline(events) {
+  const inner = document.getElementById('timeline-inner');
+  inner.innerHTML = '';
+
+  if (!chart || !currentData.length) return;
+
+  // Called from animation.onComplete so chart pixels are guaranteed ready
+  const data = getFilteredData();
+  if (!data.length) return;
+  const meta0 = chart.getDatasetMeta(0);
+  if (!meta0.data.length) return;
+
+  // Build two lookup tables from Chart.js internal pixel positions:
+  //   labelToX[YYYY-MM-DD] — exact day (for Fed API events that carry a full date)
+  //   monthToX[YYYY-MM]    — first label of that month (for static EVENTS_DB events)
+  const labelToX = {};
+  const monthToX = {};
+  chart.data.labels.forEach((lbl, i) => {
+    if (!meta0.data[i]) return;
+    labelToX[lbl] = meta0.data[i].x;
+    const mo = lbl.slice(0, 7);
+    if (!(mo in monthToX)) monthToX[mo] = meta0.data[i].x;
+  });
+
+  events.forEach(ev => {
+    // Prefer exact-date match; fall back to month bucket for YYYY-MM events
+    const px = labelToX[ev.d] ?? monthToX[ev.d] ?? monthToX[ev.d.slice(0, 7)];
+    if (px === undefined) return; // outside filtered range
+
+    const cs = catStyle(ev.cat);
+    const flag = document.createElement('div');
+    flag.className = 'ev-flag';
+    flag.id = `evflag-${ev.d}`;
+    flag.style.left = px + 'px';
+    flag.style.color = cs.text;
+    flag.innerHTML = `<div class="ev-line"></div><div class="ev-chip" style="background:${cs.bg};color:${cs.text};border:0.5px solid ${cs.text}55">${cs.label}</div>`;
+    flag.title = ev.title;
+    flag.addEventListener('click', () => showDetail(ev));
+    inner.appendChild(flag);
+  });
+}
+
+function highlightEventFlag(dateStr) {
+  // Remove all highlights
+  document.querySelectorAll('.ev-flag.highlighted').forEach(f=>f.classList.remove('highlighted'));
+  if (!dateStr) return;
+  const el = document.getElementById(`evflag-${dateStr}`);
+  if (el) el.classList.add('highlighted');
+}
+
+/* ══════════ DETAIL CARD ══════════ */
+function showDetail(ev) {
+  const cs=catStyle(ev.cat), card=document.getElementById('detail-card');
+  card.style.display='block';
+  card.innerHTML=`
+    <div class="detail-top">
+      <div>
+        <div class="detail-title">${ev.title}</div>
+        <div class="detail-date">${ev.d}</div>
+      </div>
+      <span class="badge" style="background:${cs.bg};color:${cs.text};border:0.5px solid ${cs.text}44">${cs.label}</span>
+    </div>
+    <div class="detail-body">${ev.body}</div>`;
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ══════════ CONTROLS ══════════ */
+function getFilteredData() {
+  const sel = document.getElementById('range-sel').value;
+  return sel==='all' ? currentData : currentData.filter(r=>r.date.startsWith(sel));
+}
+
+function filterCat(btn, cat) {
+  activeFilter=cat;
+  document.querySelectorAll('.ctrl-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  activeEvents = currentEvents.filter(e=>cat==='all'||e.cat===cat);
+  buildTimeline(activeEvents);
+}
+
+function toggleSeries(key) {
+  hiddenSeries.has(key)?hiddenSeries.delete(key):hiddenSeries.add(key);
+  const m=chart&&chart.data.datasets.find(d=>d.seriesKey===key);
+  if (m){m.hidden=hiddenSeries.has(key);chart.update();}
+  document.getElementById('leg-'+key)?.classList.toggle('dim',hiddenSeries.has(key));
+}
+
+function buildRangeSelector(data) {
+  const years=[...new Set(data.map(r=>r.date.slice(0,4)))].sort();
+  const sel=document.getElementById('range-sel');
+  sel.innerHTML=`<option value="all">Full period: ${years[0]}–${years[years.length-1]}</option>`;
+  years.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;sel.appendChild(o);});
+}
+
+function onRangeChange() {
+  const data=getFilteredData();
+  buildChart(data);
+  buildTimeline(activeEvents);
+}
+
+/* ══════════ SWITCH CB ══════════ */
+async function switchCB(key) {
+  currentCB=key; hiddenSeries=new Set(); activeFilter='all';
+  document.querySelectorAll('.ctrl-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.getElementById('detail-card').style.display='none';
+  showLoading(`Fetching live data for ${key.toUpperCase()}…`);
+
+  try {
+    const result = await fetchData(key, true);
+    currentData  = result.data||[];
+    currentMeta  = result;
+
+    if (!currentData.length) {
+      setPill('err','no data');
+      const health = await fetch(`${apiBase()}/api/health`,{signal:AbortSignal.timeout(4000)}).then(r=>r.json()).catch(()=>null);
+      showSetupGuide(health);
+      return;
+    }
+
+    document.getElementById('cb-title').textContent = result.name;
+    // Attach fx_label from series config so legend and KPI can use it
+    if (result.series?.fx) currentMeta = { ...result, fx_label: result.series.fx.label };
+    document.getElementById('cb-subtitle').textContent =
+      `Policy rate · CPI · 2Y & 10Y yields · live data · ${result.currency} · target: ${result.cpi_target}%`;
+
+    // Load events: dynamic from API for fed, static EVENTS_DB for others
+    try {
+      const evData = await fetch(`${apiBase()}/api/events/${key}`).then(r=>r.json());
+      currentEvents = (evData.events && evData.events.length) ? evData.events : (EVENTS_DB[key]||[]);
+    } catch(_) {
+      currentEvents = EVENTS_DB[key]||[];
+    }
+    activeEvents = currentEvents;
+
+    buildRangeSelector(currentData);
+    buildKPI(result);
+    buildLegend();
+    buildChart(getFilteredData());
+    buildTimeline(activeEvents);
+
+    setPill(result.partial?'warn':'ok', result.partial?`partial · ${result.count} months`:`live · ${result.count} months`);
+    showMain();
+  } catch(e) {
+    setPill('err','fetch failed');
+    const health = await fetch(`${apiBase()}/api/health`,{signal:AbortSignal.timeout(4000)}).then(r=>r.json()).catch(()=>null);
+    showSetupGuide(health);
+  }
+}
+
+async function forceRefresh() {
+  showLoading('Refreshing…');
+  try {
+    const result = await fetchData(currentCB, true);
+    currentData=result.data||[];
+    buildChart(getFilteredData());
+    buildKPI(result);
+    buildTimeline(activeEvents);
+    setPill('ok',`live · ${result.count} months · refreshed`);
+    showMain();
+  } catch(e) { setPill('err','refresh failed'); showMain(); }
+}
+
+/* ══════════ INIT ══════════ */
+window.filterCat=filterCat; window.toggleSeries=toggleSeries;
+window.onRangeChange=onRangeChange; window.switchCB=switchCB;
+window.forceRefresh=forceRefresh; window.connectAndLoad=connectAndLoad;
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('cb-sel').value='pol';
+  connectAndLoad();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.ipynb
+
+# Environment / secrets
+.env
+.env.local
+
+# Caches (regenerated at runtime)
+.cache/
+.data/
+
+# IDE / OS
+.DS_Store
+.claude/
+*.zip
+data.xml
+*.parquet
+Untitled*.ipynb
+.ipynb_checkpoints/
+files.zip
+# Root-level dead duplicates (active versions live in fetchers/)
+/fred.py
+/eurostat.py
+/ecb.py
