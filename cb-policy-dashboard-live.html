@@ -146,6 +146,8 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
 .fp-delta.down { background:var(--ok-bg);   color:var(--ok);   }
 .fp-delta.flat { background:var(--surface2); color:var(--text3); }
 .fp-gap { font-size:10px; color:var(--text3); margin-top:2px; }
+.fp-body { font-size:10px; color:var(--text2); line-height:1.5; margin-top:5px; }
+.fp-divider { height:0.5px; background:var(--border); margin:6px 0; }
 
 /* vertical crosshair line drawn by JS over chart area */
 #crosshair {
@@ -525,6 +527,13 @@ function buildFedPanel() {
   const cbEvents  = currentEvents.filter(e=>e.cat==='cb').slice(-2);
   const spEvents  = currentEvents.filter(e=>e.cat==='speech').slice(-2);
 
+  const evCard = (ev, rate) => `
+    <div class="fp-row">
+      <span class="fp-date">${fmtDate(ev.d)}</span>
+      ${rate!=null?`<span class="fp-rate">${fmt(rate)}</span>`:''}
+    </div>
+    <div class="fp-body">${ev.body || ''}</div>`;
+
   // ── CB decisions ──────────────────────────────────────────
   let cbHtml = '';
   if (cbEvents.length >= 2) {
@@ -534,18 +543,12 @@ function buildFedPanel() {
     const deltaClass = bps===0||bps===null ? 'flat' : bps>0 ? 'up' : 'down';
     const deltaLabel = bps===null ? '–' : bps===0 ? 'Unchanged' : (bps>0?'+':'')+bps+'bp';
     cbHtml = `
-      <div class="fp-row">
-        <span class="fp-date">${fmtDate(last.d)}</span>
-        <span class="fp-rate">${fmt(r2)}</span>
-      </div>
-      <div class="fp-row">
-        <span class="fp-date">${fmtDate(prev.d)}</span>
-        <span class="fp-rate">${fmt(r1)}</span>
-      </div>
-      <div class="fp-gap"><span class="fp-delta ${deltaClass}">${deltaLabel}</span></div>`;
+      ${evCard(last, r2)}
+      <div class="fp-gap"><span class="fp-delta ${deltaClass}">${deltaLabel}</span></div>
+      <div class="fp-divider"></div>
+      ${evCard(prev, r1)}`;
   } else if (cbEvents.length === 1) {
-    const r = rateOn(cbEvents[0].d);
-    cbHtml = `<div class="fp-row"><span class="fp-date">${fmtDate(cbEvents[0].d)}</span><span class="fp-rate">${fmt(r)}</span></div>`;
+    cbHtml = evCard(cbEvents[0], rateOn(cbEvents[0].d));
   } else {
     cbHtml = '<div class="fp-gap">No data</div>';
   }
@@ -556,11 +559,12 @@ function buildFedPanel() {
     const [prev, last] = spEvents;
     const days = Math.round((new Date(last.d) - new Date(prev.d)) / 86400000);
     spHtml = `
-      <div class="fp-row"><span class="fp-date">${fmtDate(last.d)}</span></div>
-      <div class="fp-row"><span class="fp-date">${fmtDate(prev.d)}</span></div>
-      <div class="fp-gap">${days} days apart</div>`;
+      ${evCard(last, null)}
+      <div class="fp-gap">${days} days since previous</div>
+      <div class="fp-divider"></div>
+      ${evCard(prev, null)}`;
   } else if (spEvents.length === 1) {
-    spHtml = `<div class="fp-row"><span class="fp-date">${fmtDate(spEvents[0].d)}</span></div>`;
+    spHtml = evCard(spEvents[0], null);
   } else {
     spHtml = '<div class="fp-gap">No data</div>';
   }
