@@ -10,9 +10,10 @@ __pycache__/
 .env
 .env.local
 
-# Caches (regenerated at runtime)
+# TTL cache (regenerated at runtime)
 .cache/
-.data/
+# .data/ is committed — contains pre-computed Claude summaries so Railway
+# doesn't need to regenerate them on every cold start
 
 # IDE / OS
 .DS_Store
