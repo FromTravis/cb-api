@@ -121,6 +121,28 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
 .ev-flag.highlighted .ev-line { opacity:1; height:26px; }
 .ev-flag.highlighted .ev-chip { box-shadow:0 0 0 1.5px currentColor; }
 
+/* ── fed decisions panel ── */
+#fed-panel {
+  position:absolute; top:8px; right:8px; z-index:4;
+  width:190px; background:var(--surface); border:0.5px solid var(--border-strong);
+  border-radius:var(--radius); box-shadow:var(--shadow); font-size:11px;
+  overflow:hidden;
+}
+.fp-section { padding:8px 10px; }
+.fp-section + .fp-section { border-top:0.5px solid var(--border); }
+.fp-title { font-size:9px; font-weight:600; text-transform:uppercase;
+  letter-spacing:0.06em; color:var(--text3); margin-bottom:6px; }
+.fp-row { display:flex; justify-content:space-between; align-items:baseline;
+  gap:4px; margin-bottom:4px; }
+.fp-row:last-child { margin-bottom:0; }
+.fp-date { color:var(--text2); }
+.fp-rate { font-weight:500; font-variant-numeric:tabular-nums; }
+.fp-delta { font-size:10px; font-weight:600; padding:1px 5px; border-radius:4px; }
+.fp-delta.up   { background:var(--err-bg);  color:var(--err);  }
+.fp-delta.down { background:var(--ok-bg);   color:var(--ok);   }
+.fp-delta.flat { background:var(--surface2); color:var(--text3); }
+.fp-gap { font-size:10px; color:var(--text3); margin-top:2px; }
+
 /* vertical crosshair line drawn by JS over chart area */
 #crosshair {
   position:absolute; top:0; width:1px; pointer-events:none;
@@ -200,6 +222,7 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
     <div class="chart-wrap" id="chart-wrap">
       <canvas id="mainChart" role="img" aria-label="Central bank policy dashboard chart"></canvas>
       <div id="crosshair"></div>
+      <div id="fed-panel" style="display:none"></div>
     </div>
     <div class="timeline-strip">
       <div class="tl-label">Event timeline — click any flag to read context</div>
@@ -473,6 +496,79 @@ function buildLegend() {
     }).join('');
 }
 
+/* ══════════ FED DECISIONS PANEL ══════════ */
+function buildFedPanel() {
+  const panel = document.getElementById('fed-panel');
+  if (currentCB !== 'fed' || !currentData.length || !currentEvents.length) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  // Lookup Fed funds rate on or just before a given date
+  const rateOn = d => {
+    const rows = currentData.filter(r => r.date <= d && r.rate != null);
+    return rows.length ? rows[rows.length-1].rate : null;
+  };
+
+  const fmt = r => r != null ? r.toFixed(2)+'%' : 'n/a';
+  const fmtDate = d => {
+    try { return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+    catch(_) { return d; }
+  };
+
+  const cbEvents  = currentEvents.filter(e=>e.cat==='cb').slice(-2);
+  const spEvents  = currentEvents.filter(e=>e.cat==='speech').slice(-2);
+
+  // ── CB decisions ──────────────────────────────────────────
+  let cbHtml = '';
+  if (cbEvents.length >= 2) {
+    const [prev, last] = cbEvents;
+    const r1 = rateOn(prev.d), r2 = rateOn(last.d);
+    const bps = r1!=null && r2!=null ? Math.round((r2-r1)*100) : null;
+    const deltaClass = bps===0||bps===null ? 'flat' : bps>0 ? 'up' : 'down';
+    const deltaLabel = bps===null ? '–' : bps===0 ? 'Unchanged' : (bps>0?'+':'')+bps+'bp';
+    cbHtml = `
+      <div class="fp-row">
+        <span class="fp-date">${fmtDate(last.d)}</span>
+        <span class="fp-rate">${fmt(r2)}</span>
+      </div>
+      <div class="fp-row">
+        <span class="fp-date">${fmtDate(prev.d)}</span>
+        <span class="fp-rate">${fmt(r1)}</span>
+      </div>
+      <div class="fp-gap"><span class="fp-delta ${deltaClass}">${deltaLabel}</span></div>`;
+  } else if (cbEvents.length === 1) {
+    const r = rateOn(cbEvents[0].d);
+    cbHtml = `<div class="fp-row"><span class="fp-date">${fmtDate(cbEvents[0].d)}</span><span class="fp-rate">${fmt(r)}</span></div>`;
+  } else {
+    cbHtml = '<div class="fp-gap">No data</div>';
+  }
+
+  // ── Minutes (speeches) ─────────────────────────────────────
+  let spHtml = '';
+  if (spEvents.length >= 2) {
+    const [prev, last] = spEvents;
+    const days = Math.round((new Date(last.d) - new Date(prev.d)) / 86400000);
+    spHtml = `
+      <div class="fp-row"><span class="fp-date">${fmtDate(last.d)}</span></div>
+      <div class="fp-row"><span class="fp-date">${fmtDate(prev.d)}</span></div>
+      <div class="fp-gap">${days} days apart</div>`;
+  } else if (spEvents.length === 1) {
+    spHtml = `<div class="fp-row"><span class="fp-date">${fmtDate(spEvents[0].d)}</span></div>`;
+  } else {
+    spHtml = '<div class="fp-gap">No data</div>';
+  }
+
+  panel.innerHTML = `
+    <div class="fp-section">
+      <div class="fp-title">CB Decisions</div>${cbHtml}
+    </div>
+    <div class="fp-section">
+      <div class="fp-title">Minutes</div>${spHtml}
+    </div>`;
+  panel.style.display = 'block';
+}
+
 /* ══════════ RENDER: CHART ══════════ */
 let _mouseWired = false;
 
@@ -688,6 +784,7 @@ function onRangeChange() {
 /* ══════════ SWITCH CB ══════════ */
 async function switchCB(key) {
   currentCB=key; hiddenSeries=new Set(); activeFilter='all';
+  document.getElementById('fed-panel').style.display='none';
   document.querySelectorAll('.ctrl-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
   document.getElementById('detail-card').style.display='none';
   showLoading(`Fetching live data for ${key.toUpperCase()}…`);
@@ -724,6 +821,7 @@ async function switchCB(key) {
     buildLegend();
     buildChart(getFilteredData());
     buildTimeline(activeEvents);
+    buildFedPanel();
 
     setPill(result.partial?'warn':'ok', result.partial?`partial · ${result.count} months`:`live · ${result.count} months`);
     showMain();
