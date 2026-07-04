@@ -121,33 +121,6 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
 .ev-flag.highlighted .ev-line { opacity:1; height:26px; }
 .ev-flag.highlighted .ev-chip { box-shadow:0 0 0 1.5px currentColor; }
 
-/* ── chart + fed-panel row ── */
-.chart-row { display:flex; align-items:flex-start; gap:10px; margin-bottom:14px; }
-.chart-row .chart-panel { flex:1; min-width:0; margin-bottom:0; }
-
-/* ── fed decisions panel ── */
-#fed-panel {
-  width:176px; flex-shrink:0;
-  background:var(--surface); border:0.5px solid var(--border-strong);
-  border-radius:12px; box-shadow:var(--shadow); font-size:11px;
-  overflow:hidden;
-}
-.fp-section { padding:8px 10px; }
-.fp-section + .fp-section { border-top:0.5px solid var(--border); }
-.fp-title { font-size:9px; font-weight:600; text-transform:uppercase;
-  letter-spacing:0.06em; color:var(--text3); margin-bottom:6px; }
-.fp-row { display:flex; justify-content:space-between; align-items:baseline;
-  gap:4px; margin-bottom:4px; }
-.fp-row:last-child { margin-bottom:0; }
-.fp-date { color:var(--text2); }
-.fp-rate { font-weight:500; font-variant-numeric:tabular-nums; }
-.fp-delta { font-size:10px; font-weight:600; padding:1px 5px; border-radius:4px; }
-.fp-delta.up   { background:var(--err-bg);  color:var(--err);  }
-.fp-delta.down { background:var(--ok-bg);   color:var(--ok);   }
-.fp-delta.flat { background:var(--surface2); color:var(--text3); }
-.fp-gap { font-size:10px; color:var(--text3); margin-top:2px; }
-.fp-body { font-size:10px; color:var(--text2); line-height:1.5; margin-top:5px; }
-.fp-divider { height:0.5px; background:var(--border); margin:6px 0; }
 
 /* vertical crosshair line drawn by JS over chart area */
 #crosshair {
@@ -222,20 +195,17 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
     <button class="ctrl-btn" onclick="filterCat(this,'speech')">Speeches</button>
   </div>
 
-  <!-- chart + fed panel row -->
-  <div class="chart-row">
-    <div class="chart-panel" id="chart-panel">
-      <div class="legend" id="legend"></div>
-      <div class="chart-wrap" id="chart-wrap">
-        <canvas id="mainChart" role="img" aria-label="Central bank policy dashboard chart"></canvas>
-        <div id="crosshair"></div>
-      </div>
-      <div class="timeline-strip">
-        <div class="tl-label">Event timeline — click any flag to read context</div>
-        <div class="timeline-inner" id="timeline-inner"></div>
-      </div>
+  <!-- unified chart + timeline panel -->
+  <div class="chart-panel" id="chart-panel">
+    <div class="legend" id="legend"></div>
+    <div class="chart-wrap" id="chart-wrap">
+      <canvas id="mainChart" role="img" aria-label="Central bank policy dashboard chart"></canvas>
+      <div id="crosshair"></div>
     </div>
-    <div id="fed-panel" style="display:none"></div>
+    <div class="timeline-strip">
+      <div class="tl-label">Event timeline — click any flag to read context</div>
+      <div class="timeline-inner" id="timeline-inner"></div>
+    </div>
   </div>
 
   <div class="detail-card" id="detail-card"></div>
@@ -504,81 +474,6 @@ function buildLegend() {
     }).join('');
 }
 
-/* ══════════ FED DECISIONS PANEL ══════════ */
-function buildFedPanel() {
-  const panel = document.getElementById('fed-panel');
-  if (currentCB !== 'fed' || !currentData.length || !currentEvents.length) {
-    panel.style.display = 'none';
-    return;
-  }
-
-  // Lookup Fed funds rate on or just before a given date
-  const rateOn = d => {
-    const rows = currentData.filter(r => r.date <= d && r.rate != null);
-    return rows.length ? rows[rows.length-1].rate : null;
-  };
-
-  const fmt = r => r != null ? r.toFixed(2)+'%' : 'n/a';
-  const fmtDate = d => {
-    try { return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
-    catch(_) { return d; }
-  };
-
-  const cbEvents  = currentEvents.filter(e=>e.cat==='cb').slice(-2);
-  const spEvents  = currentEvents.filter(e=>e.cat==='speech').slice(-2);
-
-  const evCard = (ev, rate) => `
-    <div class="fp-row">
-      <span class="fp-date">${fmtDate(ev.d)}</span>
-      ${rate!=null?`<span class="fp-rate">${fmt(rate)}</span>`:''}
-    </div>
-    <div class="fp-body">${ev.body || ''}</div>`;
-
-  // ── CB decisions ──────────────────────────────────────────
-  let cbHtml = '';
-  if (cbEvents.length >= 2) {
-    const [prev, last] = cbEvents;
-    const r1 = rateOn(prev.d), r2 = rateOn(last.d);
-    const bps = r1!=null && r2!=null ? Math.round((r2-r1)*100) : null;
-    const deltaClass = bps===0||bps===null ? 'flat' : bps>0 ? 'up' : 'down';
-    const deltaLabel = bps===null ? '–' : bps===0 ? 'Unchanged' : (bps>0?'+':'')+bps+'bp';
-    cbHtml = `
-      ${evCard(last, r2)}
-      <div class="fp-gap"><span class="fp-delta ${deltaClass}">${deltaLabel}</span></div>
-      <div class="fp-divider"></div>
-      ${evCard(prev, r1)}`;
-  } else if (cbEvents.length === 1) {
-    cbHtml = evCard(cbEvents[0], rateOn(cbEvents[0].d));
-  } else {
-    cbHtml = '<div class="fp-gap">No data</div>';
-  }
-
-  // ── Minutes (speeches) ─────────────────────────────────────
-  let spHtml = '';
-  if (spEvents.length >= 2) {
-    const [prev, last] = spEvents;
-    const days = Math.round((new Date(last.d) - new Date(prev.d)) / 86400000);
-    spHtml = `
-      ${evCard(last, null)}
-      <div class="fp-gap">${days} days since previous</div>
-      <div class="fp-divider"></div>
-      ${evCard(prev, null)}`;
-  } else if (spEvents.length === 1) {
-    spHtml = evCard(spEvents[0], null);
-  } else {
-    spHtml = '<div class="fp-gap">No data</div>';
-  }
-
-  panel.innerHTML = `
-    <div class="fp-section">
-      <div class="fp-title">CB Decisions</div>${cbHtml}
-    </div>
-    <div class="fp-section">
-      <div class="fp-title">Minutes</div>${spHtml}
-    </div>`;
-  panel.style.display = 'block';
-}
-
 /* ══════════ RENDER: CHART ══════════ */
 let _mouseWired = false;
 
@@ -794,7 +689,6 @@ function onRangeChange() {
 /* ══════════ SWITCH CB ══════════ */
 async function switchCB(key) {
   currentCB=key; hiddenSeries=new Set(); activeFilter='all';
-  document.getElementById('fed-panel').style.display='none';
   document.querySelectorAll('.ctrl-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
   document.getElementById('detail-card').style.display='none';
   showLoading(`Fetching live data for ${key.toUpperCase()}…`);
@@ -831,7 +725,6 @@ async function switchCB(key) {
     buildLegend();
     buildChart(getFilteredData());
     buildTimeline(activeEvents);
-    buildFedPanel();
 
     setPill(result.partial?'warn':'ok', result.partial?`partial · ${result.count} months`:`live · ${result.count} months`);
     showMain();
