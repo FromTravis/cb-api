@@ -121,11 +121,15 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
 .ev-flag.highlighted .ev-line { opacity:1; height:26px; }
 .ev-flag.highlighted .ev-chip { box-shadow:0 0 0 1.5px currentColor; }
 
+/* ── chart + fed-panel row ── */
+.chart-row { display:flex; align-items:flex-start; gap:10px; margin-bottom:14px; }
+.chart-row .chart-panel { flex:1; min-width:0; margin-bottom:0; }
+
 /* ── fed decisions panel ── */
 #fed-panel {
-  position:absolute; top:8px; right:8px; z-index:4;
-  width:190px; background:var(--surface); border:0.5px solid var(--border-strong);
-  border-radius:var(--radius); box-shadow:var(--shadow); font-size:11px;
+  width:176px; flex-shrink:0;
+  background:var(--surface); border:0.5px solid var(--border-strong);
+  border-radius:12px; box-shadow:var(--shadow); font-size:11px;
   overflow:hidden;
 }
 .fp-section { padding:8px 10px; }
@@ -216,18 +220,20 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
     <button class="ctrl-btn" onclick="filterCat(this,'speech')">Speeches</button>
   </div>
 
-  <!-- unified chart + timeline panel -->
-  <div class="chart-panel" id="chart-panel">
-    <div class="legend" id="legend"></div>
-    <div class="chart-wrap" id="chart-wrap">
-      <canvas id="mainChart" role="img" aria-label="Central bank policy dashboard chart"></canvas>
-      <div id="crosshair"></div>
-      <div id="fed-panel" style="display:none"></div>
+  <!-- chart + fed panel row -->
+  <div class="chart-row">
+    <div class="chart-panel" id="chart-panel">
+      <div class="legend" id="legend"></div>
+      <div class="chart-wrap" id="chart-wrap">
+        <canvas id="mainChart" role="img" aria-label="Central bank policy dashboard chart"></canvas>
+        <div id="crosshair"></div>
+      </div>
+      <div class="timeline-strip">
+        <div class="tl-label">Event timeline — click any flag to read context</div>
+        <div class="timeline-inner" id="timeline-inner"></div>
+      </div>
     </div>
-    <div class="timeline-strip">
-      <div class="tl-label">Event timeline — click any flag to read context</div>
-      <div class="timeline-inner" id="timeline-inner"></div>
-    </div>
+    <div id="fed-panel" style="display:none"></div>
   </div>
 
   <div class="detail-card" id="detail-card"></div>
