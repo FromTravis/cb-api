@@ -48,6 +48,12 @@ def _cb_or_404(cb_key):
     return cfg, None
 
 
+@app.get("/")
+def index():
+    from flask import send_from_directory
+    return send_from_directory(".", "cb-policy-dashboard-live.html")
+
+
 @app.get("/api/banks")
 def list_banks():
     return jsonify({"banks": [

@@ -167,7 +167,7 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
 
 <div class="api-bar">
   <label for="api-url">API</label>
-  <input type="text" id="api-url" value="http://localhost:5000"/>
+  <input type="text" id="api-url" value=""/>
   <span class="api-pill idle" id="api-pill">checking…</span>
   <button class="icon-btn" onclick="connectAndLoad()">↻ reconnect</button>
   <button class="icon-btn" onclick="forceRefresh()">⟳ refresh data</button>
@@ -335,7 +335,8 @@ const catStyle = cat => {
   return isDark() ? {bg:c.db, text:c.dt, label:c.label} : {bg:c.lb, text:c.lt, label:c.label};
 };
 const seriesColor = k => isDark() ? SERIES_DEF[k].dc : SERIES_DEF[k].lc;
-const apiBase = () => (document.getElementById('api-url').value||'http://localhost:5000').replace(/\/$/,'');
+// Empty field → same origin (works on Railway); fallback to localhost for local dev
+const apiBase = () => (document.getElementById('api-url').value || window.location.origin).replace(/\/$/,'');
 
 /* ══════════ UI helpers ══════════ */
 function showLoading(msg) {
