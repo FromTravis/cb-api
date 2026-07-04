@@ -316,7 +316,7 @@ const CAT = {
 };
 
 /* ══════════ STATE ══════════ */
-let currentCB   = 'pol';
+let currentCB   = 'fed';
 let currentData = [];
 let currentMeta = null;
 let chart       = null;
@@ -753,7 +753,7 @@ window.onRangeChange=onRangeChange; window.switchCB=switchCB;
 window.forceRefresh=forceRefresh; window.connectAndLoad=connectAndLoad;
 
 document.addEventListener('DOMContentLoaded', ()=>{
-  document.getElementById('cb-sel').value='pol';
+  document.getElementById('cb-sel').value='fed';
   connectAndLoad();
 });
 </script>
