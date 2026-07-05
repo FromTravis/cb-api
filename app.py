@@ -119,6 +119,7 @@ def get_events(cb_key):
     fetcher_map = {
         "fed": "fetchers.fed_events",
         "ecb": "fetchers.ecb_events",
+        "boe": "fetchers.boe_events",
     }
     if cb_key in fetcher_map:
         import importlib
@@ -189,7 +190,7 @@ def _events_daily_refresh():
     """Background thread: check for new CB events once every 24 hours."""
     while True:
         time.sleep(24 * 60 * 60)
-        for name, mod_path in [("Fed", "fetchers.fed_events"), ("ECB", "fetchers.ecb_events")]:
+        for name, mod_path in [("Fed", "fetchers.fed_events"), ("ECB", "fetchers.ecb_events"), ("BoE", "fetchers.boe_events")]:
             logger.info("Daily %s events refresh starting…", name)
             try:
                 import importlib
