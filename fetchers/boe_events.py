@@ -41,33 +41,30 @@ SUMMARY_PROMPT = (
 
 # ── meeting discovery ─────────────────────────────────────────────────────────
 
-def _pdf_url(year: int, month: str) -> str:
-    slug = f"{month}-{year}"
-    return (
-        f"{BASE_URL}/-/media/boe/files/monetary-policy-summary-and-minutes"
-        f"/{year}/monetary-policy-summary-and-minutes-{slug}.pdf"
-    )
-
-
 def _page_url(year: int, month: str) -> str:
     return f"{BASE_URL}/monetary-policy-summary-and-minutes/{year}/{month}-{year}"
 
 
 def _exists(year: int, month: str) -> bool:
-    """Quick HEAD check on PDF URL to confirm a meeting exists for that month."""
+    """Check the HTML page URL directly — more reliable than PDF (which 302-redirects for older years)."""
     try:
-        r = requests.head(_pdf_url(year, month), headers=HEADERS, timeout=5,
+        r = requests.head(_page_url(year, month), headers=HEADERS, timeout=5,
                           allow_redirects=True)
         return r.status_code == 200
     except requests.RequestException:
         return False
 
 
-def _discover_meetings(cutoff: str) -> list[dict]:
+def _discover_meetings(cutoff: str = DEFAULT_START_DATE[:7]) -> list[dict]:
     """
-    Find all MPC meetings since cutoff (YYYY-MM) by checking each month.
+    Find all MPC meetings since cutoff (YYYY-MM). Never goes before DEFAULT_START_DATE.
     Returns sorted list of {url, d (YYYY-MM-DD), title}.
     """
+    # Floor: never go back further than DEFAULT_START_DATE
+    floor = DEFAULT_START_DATE[:7]
+    if cutoff < floor:
+        cutoff = floor
+
     start_year = int(cutoff[:4])
     start_month = int(cutoff[5:7])
     current = date.today()
