@@ -80,9 +80,9 @@ CB_CONFIG = {
         "country": "PL", "currency": "PLN", "cpi_target": 2.5,
         "series": {
             "rate": {"source": "nbp",  "id": "ref", "label": "NBP Reference Rate", "frequency": "d"},
-            "cpi":  {"source": "fred", "id": "POLCPIALLMINMEI", "label": "CPI YoY", "transform": "yoy_pct"},
+            "cpi":  {"source": "eurostat", "id": "prc_hicp_manr|geo=PL|coicop=CP00|unit=RCH_A", "label": "HICP YoY"},
             "y2":   {"source": "fred",     "id": "IR3TIB01PLM156N",        "label": "3M interbank rate"},
-            "y10":  {"source": "eurostat", "id": "irt_lt_mcby_m:PL",       "label": "10Y bond yield"},
+            "y10":  {"source": "eurostat", "id": "irt_lt_mcby_m|geo=PL",     "label": "10Y bond yield"},
             "fx":   {"source": "nbp",  "id": "eur", "label": "EUR/PLN", "frequency": "d"},
         }
     },

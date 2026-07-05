@@ -91,9 +91,11 @@ def _fetch_series(sc, start_date, frequency_override=None):
             raw = _apply_transform(raw, transform)
     elif src == "eurostat":
         from fetchers.eurostat import fetch as eurostat_fetch
-        # id format: "dataset:GEO", e.g. "irt_lt_mcby_m:PL"
-        dataset, geo = sid.split(":", 1)
-        raw = eurostat_fetch(dataset, {"geo": geo}, start_date=start_date)
+        # id format: "dataset|key=val|key=val", e.g. "irt_lt_mcby_m|geo=PL"
+        parts  = sid.split("|")
+        dataset = parts[0]
+        params  = dict(p.split("=", 1) for p in parts[1:])
+        raw = eurostat_fetch(dataset, params, start_date=start_date)
         if transform:
             raw = _apply_transform(raw, transform)
     elif src == "nbp":
