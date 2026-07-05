@@ -89,6 +89,15 @@ def _fetch_series(sc, start_date, frequency_override=None):
         raw = ecb_fetch(sid, start_date=start_date)
         if transform in ("invert",):
             raw = _apply_transform(raw, transform)
+    elif src == "boe":
+        from fetchers.boe_db import fetch as boe_fetch
+        raw = boe_fetch(sid, start_date=start_date)
+        if transform:
+            raw = _apply_transform(raw, transform)
+    elif src == "ons":
+        from fetchers.ons import fetch as ons_fetch
+        raw = ons_fetch(sid, start_date=start_date)
+        # ONS D7G7 is already YoY % — no transform needed
     else:
         raw = []
     return raw

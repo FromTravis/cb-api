@@ -53,11 +53,11 @@ CB_CONFIG = {
         "name": "Bank of England (BoE)",
         "country": "GB", "currency": "GBP", "cpi_target": 2.0,
         "series": {
-            "rate": {"source": "fred", "id": "BOERUKM",        "label": "Bank Rate"},
-            "cpi":  {"source": "fred", "id": "GBRCPIALLMINMEI","label": "CPI YoY", "transform": "yoy_pct"},
-            "y2":   {"source": "fred", "id": "IRLTST01GBM156N","label": "2Y gilt yield"},
-            "y10":  {"source": "fred", "id": "IRLTLT01GBM156N","label": "10Y gilt yield"},
-            "fx":   {"source": "ecb",  "id": "EXR/M.GBP.EUR.SP00.A", "label": "GBP/EUR", "transform": "invert"},
+            "rate": {"source": "boe", "id": "IUDBEDR", "label": "Bank Rate",             "frequency": "d"},
+            "cpi":  {"source": "ons", "id": "D7G7",   "label": "CPI YoY"},
+            "y2":   {"source": "boe", "id": "IUDSNPY", "label": "2Y Gilt nominal yield", "frequency": "d"},
+            "y10":  {"source": "boe", "id": "IUDMNPY", "label": "10Y Gilt nominal yield","frequency": "d"},
+            "fx":   {"source": "boe", "id": "XUDLERS", "label": "GBP/EUR",               "frequency": "d"},
         }
     },
 
