@@ -96,8 +96,8 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
   margin-top:0; padding-bottom:14px;
 }
 .timeline-inner {
-  position:relative; width:100%; min-height:70px; height:70px;
-  /* JS positions absolute flags inside here — sized by animation.onComplete */
+  position:relative; width:100%; min-height:84px; height:84px;
+  /* JS positions absolute flags inside here — cb row top:0, speech row top:44px */
 }
 .tl-label { font-size:10px; color:var(--text3); letter-spacing:0.05em; text-transform:uppercase; padding:7px 0 4px; }
 
@@ -620,6 +620,7 @@ function buildTimeline(events) {
     flag.className = 'ev-flag';
     flag.id = `evflag-${ev.d}`;
     flag.style.left = px + 'px';
+    flag.style.top  = ev.cat === 'cb' ? '0px' : '44px';
     flag.style.color = cs.text;
     flag.innerHTML = `<div class="ev-line"></div><div class="ev-chip" style="background:${cs.bg};color:${cs.text};border:0.5px solid ${cs.text}55">${cs.label}</div>`;
     flag.title = ev.title;
