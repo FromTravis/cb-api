@@ -79,11 +79,11 @@ CB_CONFIG = {
         "name": "National Bank of Poland (NBP)",
         "country": "PL", "currency": "PLN", "cpi_target": 2.5,
         "series": {
-            "rate": {"source": "fred", "id": "IRSTCB01PLM156N", "label": "Reference rate"},
+            "rate": {"source": "nbp",  "id": "ref", "label": "NBP Reference Rate", "frequency": "d"},
             "cpi":  {"source": "fred", "id": "POLCPIALLMINMEI", "label": "CPI YoY", "transform": "yoy_pct"},
             "y2":   {"source": "fred", "id": "IR3TIB01PLM156N", "label": "3M interbank rate"},
             "y10":  {"source": "fred", "id": "IRLTLT01PLM156N", "label": "10Y bond yield"},
-            "fx":   {"source": "ecb",  "id": "EXR/M.PLN.EUR.SP00.A", "label": "EUR/PLN"},
+            "fx":   {"source": "nbp",  "id": "eur", "label": "EUR/PLN", "frequency": "d"},
         }
     },
 

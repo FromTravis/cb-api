@@ -89,6 +89,11 @@ def _fetch_series(sc, start_date, frequency_override=None):
         raw = ecb_fetch(sid, start_date=start_date)
         if transform in ("invert",):
             raw = _apply_transform(raw, transform)
+    elif src == "nbp":
+        from fetchers.nbp import fetch as nbp_fetch
+        raw = nbp_fetch(sid, start_date=start_date)
+        if transform:
+            raw = _apply_transform(raw, transform)
     elif src == "boe":
         from fetchers.boe_db import fetch as boe_fetch
         raw = boe_fetch(sid, start_date=start_date)
