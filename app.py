@@ -115,14 +115,19 @@ def get_events(cb_key):
     _, err = _cb_or_404(cb_key)
     if err:
         return err
-    if cb_key == "fed":
-        from fetchers.fed_events import fetch as fetch_fed_events
-        start_date = request.args.get("start", DEFAULT_START_DATE)
+    start_date = request.args.get("start", DEFAULT_START_DATE)
+    fetcher_map = {
+        "fed": "fetchers.fed_events",
+        "ecb": "fetchers.ecb_events",
+    }
+    if cb_key in fetcher_map:
+        import importlib
+        mod = importlib.import_module(fetcher_map[cb_key])
         try:
-            events = fetch_fed_events(start_date=start_date)
+            events = mod.fetch(start_date=start_date)
             return jsonify({"events": events, "count": len(events)})
         except Exception as e:
-            logger.error("Failed to fetch Fed events: %s", e)
+            logger.error("Failed to fetch %s events: %s", cb_key, e)
             return jsonify({"events": [], "error": str(e)})
     return jsonify({"events": [], "count": 0})
 
@@ -180,17 +185,19 @@ def clear_cache():
     return jsonify({"cleared": count})
 
 
-def _fed_events_daily_refresh():
-    """Background thread: check for new FOMC statements once every 24 hours."""
+def _events_daily_refresh():
+    """Background thread: check for new CB events once every 24 hours."""
     while True:
         time.sleep(24 * 60 * 60)
-        logger.info("Daily FOMC refresh starting…")
-        try:
-            from fetchers.fed_events import fetch as fetch_fed
-            events = fetch_fed(start_date=DEFAULT_START_DATE, force=True)
-            logger.info("Daily FOMC refresh complete: %d events", len(events))
-        except Exception as e:
-            logger.error("Daily FOMC refresh failed: %s", e)
+        for name, mod_path in [("Fed", "fetchers.fed_events"), ("ECB", "fetchers.ecb_events")]:
+            logger.info("Daily %s events refresh starting…", name)
+            try:
+                import importlib
+                mod = importlib.import_module(mod_path)
+                events = mod.fetch(start_date=DEFAULT_START_DATE, force=True)
+                logger.info("Daily %s refresh complete: %d events", name, len(events))
+            except Exception as e:
+                logger.error("Daily %s refresh failed: %s", name, e)
 
 
 if __name__ == "__main__":
@@ -204,6 +211,6 @@ if __name__ == "__main__":
     if cleared:
         logger.info("Cleared %d stale cache entries on startup", cleared)
     # Start daily background refresh for FOMC events (daemon = stops with server)
-    threading.Thread(target=_fed_events_daily_refresh, daemon=True).start()
-    logger.info("FOMC daily refresh scheduled (runs every 24h)")
+    threading.Thread(target=_events_daily_refresh, daemon=True).start()
+    logger.info("Daily events refresh scheduled (Fed + ECB, runs every 24h)")
     app.run(host="0.0.0.0", port=port, debug=debug)
