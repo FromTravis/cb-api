@@ -81,8 +81,8 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "nbp",  "id": "ref", "label": "NBP Reference Rate", "frequency": "d"},
             "cpi":  {"source": "fred", "id": "POLCPIALLMINMEI", "label": "CPI YoY", "transform": "yoy_pct"},
-            "y2":   {"source": "fred", "id": "IR3TIB01PLM156N", "label": "3M interbank rate"},
-            "y10":  {"source": "fred", "id": "IRLTLT01PLM156N", "label": "10Y bond yield"},
+            "y2":   {"source": "fred",     "id": "IR3TIB01PLM156N",        "label": "3M interbank rate"},
+            "y10":  {"source": "eurostat", "id": "irt_lt_mcby_m:PL",       "label": "10Y bond yield"},
             "fx":   {"source": "nbp",  "id": "eur", "label": "EUR/PLN", "frequency": "d"},
         }
     },
