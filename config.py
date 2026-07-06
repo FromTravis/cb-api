@@ -96,7 +96,7 @@ CB_CONFIG = {
             "cpi":  {"source": "bis",  "id": "BIS,WS_LONG_CPI,1.0|M.HU.771", "label": "CPI YoY"},
             "y2":   {"source": "fred", "id": "IR3TIB01HUM156N", "label": "3M interbank rate"},
             "y10":  {"source": "fred", "id": "IRLTLT01HUM156N", "label": "10Y bond yield"},
-            "fx":   {"source": "ecb",  "id": "EXR/M.HUF.EUR.SP00.A", "label": "EUR/HUF"},
+            "fx":   {"source": "ecb",  "id": "EXR/D.HUF.EUR.SP00.A", "label": "EUR/HUF", "frequency": "d"},
         }
     },
 
