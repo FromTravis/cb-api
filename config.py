@@ -118,8 +118,8 @@ CB_CONFIG = {
         "name": "Czech National Bank (CNB)",
         "country": "CZ", "currency": "CZK", "cpi_target": 2.0,
         "series": {
-            "rate": {"source": "fred", "id": "IRSTCB01CZM156N", "label": "2W repo rate"},
-            "cpi":  {"source": "fred", "id": "CZECPIALLMINMEI", "label": "CPI YoY", "transform": "yoy_pct"},
+            "rate": {"source": "bis",  "id": "BIS,WS_CBPOL,1.0|M.CZ",       "label": "2W repo rate"},
+            "cpi":  {"source": "bis",  "id": "BIS,WS_LONG_CPI,1.0|M.CZ.771", "label": "CPI YoY"},
             "y2":   {"source": "fred", "id": "IR3TIB01CZM156N", "label": "3M interbank rate"},
             "y10":  {"source": "fred", "id": "IRLTLT01CZM156N", "label": "10Y bond yield"},
             "fx":   {"source": "ecb",  "id": "EXR/M.CZK.EUR.SP00.A", "label": "EUR/CZK"},
