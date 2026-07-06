@@ -447,8 +447,10 @@ function buildKPI(meta) {
   if (!currentData.length) return;
   const last=currentData[currentData.length-1], first=currentData[0];
   const fv = v => v!=null ? v.toFixed(2)+'%' : 'n/a';
+  // Find the previous distinct rate value (last change before the current rate)
+  const prevRate = currentData.slice(0,-1).reverse().find(r => r.rate!=null && r.rate!==last.rate);
   const items = [
-    {label:'Policy rate',    val:fv(last.rate), sub:`from ${fv(first.rate)} at start`,   color:seriesColor('rate')},
+    {label:'Policy rate',    val:fv(last.rate), sub: prevRate ? `prev. ${fv(prevRate.rate)}` : '',   color:seriesColor('rate')},
     {label:'CPI (latest)',   val:fv(last.cpi),  sub:`target: ${meta.cpi_target}%`,       color:seriesColor('cpi')},
     {label:'2Y bond yield',  val:fv(last.y2),   sub:last.y2!=null&&last.rate!=null?`${(last.y2-last.rate).toFixed(2)}pp spread to rate`:'', color:seriesColor('y2')},
     {label:'10Y bond yield', val:fv(last.y10),  sub:last.y10!=null&&last.y2!=null?`${(last.y10-last.y2).toFixed(2)}pp slope`:'', color:seriesColor('y10')},
