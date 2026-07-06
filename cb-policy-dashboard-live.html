@@ -449,11 +449,19 @@ function buildKPI(meta) {
   const fv = v => v!=null ? v.toFixed(2)+'%' : 'n/a';
   // Find the previous distinct rate value (last change before the current rate)
   const prevRate = currentData.slice(0,-1).reverse().find(r => r.rate!=null && r.rate!==last.rate);
+  // Previous non-null values for yields (entry just before last)
+  const prevY2  = currentData.slice(0,-1).reverse().find(r => r.y2  != null);
+  const prevY10 = currentData.slice(0,-1).reverse().find(r => r.y10 != null);
+  const chg = (cur, prev) => {
+    if (cur==null || !prev) return '';
+    const d = cur - prev;
+    return (d>=0?'+':'')+d.toFixed(2)+'pp';
+  };
   const items = [
-    {label:'Policy rate',    val:fv(last.rate), sub: prevRate ? `prev. ${fv(prevRate.rate)}` : '',   color:seriesColor('rate')},
-    {label:'CPI (latest)',   val:fv(last.cpi),  sub:`target: ${meta.cpi_target}%`,       color:seriesColor('cpi')},
-    {label:'2Y bond yield',  val:fv(last.y2),   sub:last.y2!=null&&last.rate!=null?`${(last.y2-last.rate).toFixed(2)}pp spread to rate`:'', color:seriesColor('y2')},
-    {label:'10Y bond yield', val:fv(last.y10),  sub:last.y10!=null&&last.y2!=null?`${(last.y10-last.y2).toFixed(2)}pp slope`:'', color:seriesColor('y10')},
+    {label:'Policy rate',    val:fv(last.rate), sub: prevRate ? `prev. ${fv(prevRate.rate)}` : '', color:seriesColor('rate')},
+    {label:'CPI (latest)',   val:fv(last.cpi),  sub:`target: ${meta.cpi_target}%`,                color:seriesColor('cpi')},
+    {label:'2Y bond yield',  val:fv(last.y2),   sub:chg(last.y2,  prevY2?.y2),                   color:seriesColor('y2')},
+    {label:'10Y bond yield', val:fv(last.y10),  sub:chg(last.y10, prevY10?.y10),                  color:seriesColor('y10')},
   ];
   if (last.fx != null) {
     const fxLabel = currentMeta?.fx_label || SERIES_DEF.fx.label;
