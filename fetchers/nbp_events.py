@@ -119,18 +119,36 @@ def _summarize_one(text: str, cat: str) -> str:
 
 
 def _process(post: dict, cat: str, db: dict) -> tuple:
-    url = post["link"]
-    uk  = f"url:{url}"
-    if uk in db:
-        return uk, db[uk], None
+    url   = post["link"]
+    uk    = f"url:{url}"
+    title = _html_to_text(post.get("title", {}).get("rendered", ""))
 
     try:
         text = _html_to_text(post.get("content", {}).get("rendered", ""))
-        if not text or len(text) < 100:
-            return None, None, None
-        ck      = summary_store.key_for(text)
+
+        # Minutes posts are notification stubs (< 200 chars) — the full text
+        # is a PDF behind a WAF. Use a descriptive template instead of Claude.
+        if not text or len(text) < 200:
+            if cat == "speech":
+                ck = summary_store.key_for(uk)
+                if ck in db:
+                    return uk, ck, None   # template already stored
+                # Extract date from title: "...meeting held on 9 November 2022"
+                import re as _re
+                date_m = _re.search(r'held on (.+?)$', title, _re.I)
+                date_part = date_m.group(1).strip() if date_m else title
+                summary = (f"The NBP Monetary Policy Council meeting held on {date_part}. "
+                           f"Full minutes available as a PDF on the NBP website.")
+                return uk, ck, summary
+            else:
+                return None, None, None   # press release with no content — skip
+
+        ck = summary_store.key_for(text)
         if ck in db:
-            return uk, ck, None
+            # Only skip if the stored summary looks like a real one (not Claude's refusal)
+            existing = db.get(ck, "")
+            if existing and "don't have access" not in existing and len(existing) > 50:
+                return uk, ck, None
         summary = _summarize_one(text, cat)
         return uk, ck, summary
     except Exception as e:
@@ -178,7 +196,7 @@ def _generate_and_cache(cache_key: str, posts_by_cat: dict) -> None:
 # ── main entry point ──────────────────────────────────────────────────────────
 
 def fetch(start_date: str = DEFAULT_START_DATE, force: bool = False) -> list[dict]:
-    cache_key = f"nbp_events_{start_date[:7]}"
+    cache_key = f"nbp_events_v2_{start_date[:7]}"
     if not force:
         cached = cache.get(cache_key)
         if cached is not None:
@@ -187,7 +205,7 @@ def fetch(start_date: str = DEFAULT_START_DATE, force: bool = False) -> list[dic
     cutoff = start_date[:7]
 
     # Cache link list separately (avoids re-fetching paginated API on every request)
-    links_key  = f"nbp_links_{cutoff}"
+    links_key  = f"nbp_links_v2_{cutoff}"
     posts_by_cat = cache.get(links_key)
     if posts_by_cat is None:
         logger.info("Fetching NBP MPC posts since %s", cutoff)
