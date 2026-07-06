@@ -70,7 +70,7 @@ CB_CONFIG = {
             "cpi":  {"source": "bis",  "id": "BIS,WS_LONG_CPI,1.0|M.JP.771", "label": "CPI YoY"},
             "y2":   {"source": "fred", "id": "IR3TIB01JPM156N", "label": "3M interbank rate"},
             "y10":  {"source": "fred", "id": "IRLTLT01JPM156N", "label": "10Y JGB yield"},
-            "fx":   {"source": "fred", "id": "DEXJPUS", "label": "USD/JPY"},
+            "fx":   {"source": "fred", "id": "DEXJPUS", "label": "USD/JPY", "frequency": "d"},
         }
     },
 
