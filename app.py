@@ -122,6 +122,7 @@ def get_events(cb_key):
         "boe": "fetchers.boe_events",
         "boj": "fetchers.boj_events",
         "pol": "fetchers.nbp_events",
+        "hun": "fetchers.mnb_events",
     }
     if cb_key in fetcher_map:
         import importlib
@@ -203,6 +204,7 @@ EVENT_FETCHERS = [
     ("BoE", "fetchers.boe_events"),
     ("BoJ", "fetchers.boj_events"),
     ("NBP", "fetchers.nbp_events"),
+    ("MNB", "fetchers.mnb_events"),
 ]
 
 
