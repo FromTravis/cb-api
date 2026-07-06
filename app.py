@@ -187,20 +187,41 @@ def clear_cache():
     return jsonify({"cleared": count})
 
 
+EVENT_FETCHERS = [
+    ("Fed", "fetchers.fed_events"),
+    ("ECB", "fetchers.ecb_events"),
+    ("BoE", "fetchers.boe_events"),
+    ("BoJ", "fetchers.boj_events"),
+]
+
+
+def _run_event_fetchers(force=False):
+    """Fetch/summarise all CB events. Runs in a background thread."""
+    import importlib
+    for name, mod_path in EVENT_FETCHERS:
+        try:
+            mod = importlib.import_module(mod_path)
+            events = mod.fetch(start_date=DEFAULT_START_DATE, force=force)
+            logger.info("%s events: %d items", name, len(events))
+        except Exception as e:
+            logger.error("%s events fetch failed: %s", name, e)
+
+
+def _events_startup_warmup():
+    """On startup: pre-generate any missing summaries (non-blocking background task).
+    This ensures Railway has all summaries ready before the first HTTP request."""
+    time.sleep(5)   # let the server finish initialising
+    logger.info("Startup event warmup beginning…")
+    _run_event_fetchers(force=False)   # force=False: only generates missing summaries
+    logger.info("Startup event warmup complete")
+
+
 def _events_daily_refresh():
-    """Background thread: check for new CB events once every 24 hours."""
+    """Background thread: refresh CB events once every 24 hours."""
     while True:
         time.sleep(24 * 60 * 60)
-        for name, mod_path in [("Fed", "fetchers.fed_events"), ("ECB", "fetchers.ecb_events"),
-                               ("BoE", "fetchers.boe_events"), ("BoJ", "fetchers.boj_events")]:
-            logger.info("Daily %s events refresh starting…", name)
-            try:
-                import importlib
-                mod = importlib.import_module(mod_path)
-                events = mod.fetch(start_date=DEFAULT_START_DATE, force=True)
-                logger.info("Daily %s refresh complete: %d events", name, len(events))
-            except Exception as e:
-                logger.error("Daily %s refresh failed: %s", name, e)
+        logger.info("Daily events refresh starting…")
+        _run_event_fetchers(force=True)
 
 
 if __name__ == "__main__":
@@ -213,7 +234,9 @@ if __name__ == "__main__":
     cleared = cache.invalidate_all()
     if cleared:
         logger.info("Cleared %d stale cache entries on startup", cleared)
-    # Start daily background refresh for FOMC events (daemon = stops with server)
+    # Pre-generate any missing event summaries 5s after startup (non-blocking)
+    threading.Thread(target=_events_startup_warmup, daemon=True).start()
+    # Also schedule daily refresh
     threading.Thread(target=_events_daily_refresh, daemon=True).start()
-    logger.info("Daily events refresh scheduled (Fed + ECB, runs every 24h)")
+    logger.info("Event warmup and daily refresh threads started")
     app.run(host="0.0.0.0", port=port, debug=debug)
