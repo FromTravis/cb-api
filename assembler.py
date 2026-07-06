@@ -89,6 +89,11 @@ def _fetch_series(sc, start_date, frequency_override=None):
         raw = ecb_fetch(sid, start_date=start_date)
         if transform in ("invert",):
             raw = _apply_transform(raw, transform)
+    elif src == "bundesbank":
+        from fetchers.bundesbank import fetch as bundesbank_fetch
+        raw = bundesbank_fetch(sid, start_date=start_date)
+        if transform:
+            raw = _apply_transform(raw, transform)
     elif src == "eurostat":
         from fetchers.eurostat import fetch as eurostat_fetch
         # id format: "dataset|key=val|key=val", e.g. "irt_lt_mcby_m|geo=PL"

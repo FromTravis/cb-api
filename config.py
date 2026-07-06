@@ -42,8 +42,8 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "ecb",  "id": "FM/B.U2.EUR.4F.KR.MRR_FR.LEV",  "label": "ECB Main refinancing rate"},
             "cpi":  {"source": "ecb",  "id": "HICP/M.U2.N.000000.4D0.ANR", "label": "HICP YoY"},
-            "y2":   {"source": "ecb",  "id": "FM/M.U2.EUR.4F.BB.U2_2Y.YLD", "label": "EA 2Y yield"},
-            "y10":  {"source": "ecb",  "id": "FM/M.U2.EUR.4F.BB.U2_10Y.YLD", "label": "EA 10Y yield"},
+            "y2":   {"source": "bundesbank", "id": "D.REN.EUR.A610.000000WT0202.A", "label": "2Y Schatz yield",  "frequency": "d"},
+            "y10":  {"source": "bundesbank", "id": "D.REN.EUR.A630.000000WT1010.A", "label": "10Y Bund yield",    "frequency": "d"},
             "fx":   {"source": "fred", "id": "DEXUSEU", "label": "EUR/USD"},
         }
     },
