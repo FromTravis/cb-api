@@ -95,10 +95,15 @@ def _get_year_months(cutoff: str) -> list[tuple[int, int]]:
 
 
 def _check_url(url: str) -> bool:
-    """Return True if the decision page exists and has real content."""
+    """Return True if the decision page exists and has a published decision (not a future placeholder)."""
     try:
         r = requests.get(url, headers=HEADERS, timeout=8)
-        return r.status_code == 200 and 'CNB Board decisions' in r.text
+        if r.status_code != 200 or 'CNB Board decisions' not in r.text:
+            return False
+        # Reject placeholder pages for future meetings ("To be published on...")
+        if 'To be published' in r.text:
+            return False
+        return True
     except Exception:
         return False
 
