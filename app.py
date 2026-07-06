@@ -124,6 +124,7 @@ def get_events(cb_key):
         "pol": "fetchers.nbp_events",
         "hun": "fetchers.mnb_events",
         "cze": "fetchers.cnb_events",
+        "rom": "fetchers.bnr_events",
     }
     if cb_key in fetcher_map:
         import importlib
@@ -207,6 +208,7 @@ EVENT_FETCHERS = [
     ("NBP", "fetchers.nbp_events"),
     ("MNB", "fetchers.mnb_events"),
     ("CNB", "fetchers.cnb_events"),
+    ("BNR", "fetchers.bnr_events"),
 ]
 
 
