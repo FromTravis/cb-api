@@ -174,9 +174,17 @@ def get_data(cb_key):
         logger.exception("Error assembling %s", cb_key)
         return _error(f"Data fetch failed: {e}", 502)
 
-    # Expose per-series labels so the frontend can label the FX axis correctly
+    # Expose per-series labels and sources for the frontend
+    SOURCE_DISPLAY = {
+        "fred": "FRED", "ecb": "ECB", "bis": "BIS", "boe": "BoE",
+        "ons": "ONS", "nbp": "NBP", "bundesbank": "Bundesbank",
+        "eurostat": "Eurostat", "nbp_ecb": "ECB",
+    }
     series_meta = {
-        sk: {"label": sv.get("label", sk)}
+        sk: {
+            "label":  sv.get("label", sk),
+            "source": SOURCE_DISPLAY.get(sv.get("source", ""), sv.get("source", "")),
+        }
         for sk, sv in cfg["series"].items()
     }
     return jsonify({
