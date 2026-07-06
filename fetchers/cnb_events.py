@@ -195,7 +195,44 @@ _bg_lock    = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 _bg_running: set = set()
 
 
+def _discover_and_cache(cache_key: str, links_key: str, cutoff: str) -> None:
+    """Full background pipeline: discover links, then summarise."""
+    try:
+        year_months = _get_year_months(cutoff)
+        links = _discover_decisions(year_months)
+        cache.set(links_key, links)
+        logger.info("Background: found %d CNB decision pages", len(links))
+
+        if not links:
+            return
+
+        db = summary_store.load_all()
+        missing = [l for l in links if f"url:{l['url']}" not in db]
+        if not missing:
+            cache.invalidate(cache_key)
+            return
+
+        logger.info("Background: summarising %d CNB decisions…", len(missing))
+        new_entries = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+            futures = {pool.submit(_process, lk, db): lk for lk in missing}
+            for fut in concurrent.futures.as_completed(futures):
+                uk, ck, summary = fut.result()
+                if uk and ck:
+                    new_entries[uk] = ck
+                    if summary:
+                        new_entries[ck] = summary
+        if new_entries:
+            db.update(new_entries)
+            summary_store.save_all(db)
+            logger.info("Background: CNB store updated (%d total)", len(db))
+        cache.invalidate(cache_key)
+    finally:
+        _bg_running.discard(cache_key)
+
+
 def _generate_and_cache(cache_key: str, links: list) -> None:
+    """Background: summarise already-discovered links."""
     try:
         db = summary_store.load_all()
         missing = [l for l in links if f"url:{l['url']}" not in db]
@@ -230,16 +267,19 @@ def fetch(start_date: str = DEFAULT_START_DATE, force: bool = False) -> list[dic
             return cached
 
     cutoff = start_date[:7]
-
-    # Cache the discovered links to avoid re-running slow Thursday checks
     links_key = f"cnb_links_{cutoff}"
     links = cache.get(links_key)
+
     if links is None:
-        year_months = _get_year_months(cutoff)
-        logger.info("Discovering CNB decisions for %d year/months…", len(year_months))
-        links = _discover_decisions(year_months)
-        cache.set(links_key, links)
-        logger.info("Found %d accessible CNB decision pages", len(links))
+        # Discovery is slow (~2 min) — kick off entirely in background,
+        # return empty list immediately so the HTTP request doesn't time out.
+        if cache_key not in _bg_running:
+            _bg_running.add(cache_key)
+            _bg_lock.submit(_discover_and_cache, cache_key, links_key, cutoff)
+            logger.info("Background CNB discovery started")
+        events: list[dict] = []
+        cache.set(cache_key, events)
+        return events
 
     db = summary_store.load_all()
     missing = [l for l in links if f"url:{l['url']}" not in db]
