@@ -105,8 +105,8 @@ CB_CONFIG = {
         "name": "National Bank of Romania (BNR)",
         "country": "RO", "currency": "RON", "cpi_target": 2.5,
         "series": {
-            "rate": {"source": "fred", "id": "IRSTCB01ROM156N", "label": "Policy rate"},
-            "cpi":  {"source": "fred", "id": "ROMCPIALLMINMEI", "label": "CPI YoY", "transform": "yoy_pct"},
+            "rate": {"source": "bis",  "id": "BIS,WS_CBPOL,1.0|D.RO",       "label": "Policy rate", "frequency": "d"},
+            "cpi":  {"source": "bis",  "id": "BIS,WS_LONG_CPI,1.0|M.RO.771", "label": "CPI YoY"},
             "y2":   {"source": "fred", "id": "IR3TIB01ROM156N", "label": "3M interbank rate"},
             "y10":  {"source": "fred", "id": "IRLTLT01ROM156N", "label": "10Y bond yield"},
             "fx":   {"source": "ecb",  "id": "EXR/M.RON.EUR.SP00.A", "label": "EUR/RON"},
