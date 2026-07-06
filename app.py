@@ -205,15 +205,26 @@ EVENT_FETCHERS = [
 
 
 def _run_event_fetchers(force=False):
-    """Fetch/summarise all CB events. Runs in a background thread."""
+    """Fetch/summarise all CB events in parallel background threads."""
     import importlib
-    for name, mod_path in EVENT_FETCHERS:
+
+    def _fetch_one(name, mod_path):
         try:
             mod = importlib.import_module(mod_path)
             events = mod.fetch(start_date=DEFAULT_START_DATE, force=force)
             logger.info("%s events: %d items", name, len(events))
         except Exception as e:
             logger.error("%s events fetch failed: %s", name, e)
+
+    # Run all fetchers concurrently — each may take 1-3 min on first run
+    workers = [
+        threading.Thread(target=_fetch_one, args=(name, path), daemon=True)
+        for name, path in EVENT_FETCHERS
+    ]
+    for w in workers:
+        w.start()
+    for w in workers:
+        w.join()
 
 
 def _events_startup_warmup():

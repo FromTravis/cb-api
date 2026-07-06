@@ -141,6 +141,10 @@ def _fetch_page_text(url: str) -> tuple[str, str]:
                  if len(p.get_text()) > 60]
         text = " ".join(paras[:20])
 
+    # If the page has too little text it's likely a "not yet published" placeholder
+    if len(text) < 300:
+        return "", iso_date
+
     return text, iso_date
 
 
@@ -166,6 +170,9 @@ def _process_meeting(meeting: dict, db: dict) -> tuple:
         return uk, db[uk], None, None
     try:
         text, iso_date = _fetch_page_text(meeting["url"])
+        if not text:
+            # Page not yet published — skip silently
+            return None, None, None, None
         ck = summary_store.key_for(text)
         if ck in db:
             return uk, ck, None, iso_date
