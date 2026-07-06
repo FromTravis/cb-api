@@ -66,7 +66,7 @@ CB_CONFIG = {
         "name": "Bank of Japan (BoJ)",
         "country": "JP", "currency": "JPY", "cpi_target": 2.0,
         "series": {
-            "rate": {"source": "fred", "id": "IRSTCB01JPM156N", "label": "Policy rate"},
+            "rate": {"source": "bis",  "id": "BIS,WS_CBPOL,1.0|D.JP", "label": "Policy rate", "frequency": "d"},
             "cpi":  {"source": "fred", "id": "JPNCPIALLMINMEI", "label": "CPI YoY", "transform": "yoy_pct"},
             "y2":   {"source": "fred", "id": "IR3TIB01JPM156N", "label": "3M interbank rate"},
             "y10":  {"source": "fred", "id": "IRLTLT01JPM156N", "label": "10Y JGB yield"},

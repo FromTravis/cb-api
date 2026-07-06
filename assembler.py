@@ -89,6 +89,13 @@ def _fetch_series(sc, start_date, frequency_override=None):
         raw = ecb_fetch(sid, start_date=start_date)
         if transform in ("invert",):
             raw = _apply_transform(raw, transform)
+    elif src == "bis":
+        from fetchers.bis import fetch as bis_fetch
+        # id format: "flow|key", e.g. "BIS,WS_CBPOL,1.0|D.JP"
+        flow, key = sid.split("|", 1)
+        raw = bis_fetch(flow, key, start_date=start_date)
+        if transform:
+            raw = _apply_transform(raw, transform)
     elif src == "bundesbank":
         from fetchers.bundesbank import fetch as bundesbank_fetch
         raw = bundesbank_fetch(sid, start_date=start_date)
