@@ -126,11 +126,20 @@ def get_events(cb_key):
         import importlib
         mod = importlib.import_module(fetcher_map[cb_key])
         try:
-            events = mod.fetch(start_date=start_date)
+            # Always return immediately from the summary store.
+            # The startup warmup and daily refresh handle generating
+            # summaries for new statements in the background.
+            events = mod.fetch(start_date=start_date, force=False)
             return jsonify({"events": events, "count": len(events)})
         except Exception as e:
+            # If fetch() blocks on new summaries and times out, kick it off
+            # in background and return an empty list so the page still loads.
             logger.error("Failed to fetch %s events: %s", cb_key, e)
-            return jsonify({"events": [], "error": str(e)})
+            threading.Thread(
+                target=lambda: mod.fetch(start_date=DEFAULT_START_DATE, force=False),
+                daemon=True
+            ).start()
+            return jsonify({"events": [], "count": 0, "generating": True})
     return jsonify({"events": [], "count": 0})
 
 
@@ -208,11 +217,11 @@ def _run_event_fetchers(force=False):
 
 
 def _events_startup_warmup():
-    """On startup: pre-generate any missing summaries (non-blocking background task).
-    This ensures Railway has all summaries ready before the first HTTP request."""
+    """On startup: pre-generate any missing summaries in the background.
+    Runs silently — the HTTP endpoint stays responsive even while this runs."""
     time.sleep(5)   # let the server finish initialising
-    logger.info("Startup event warmup beginning…")
-    _run_event_fetchers(force=False)   # force=False: only generates missing summaries
+    logger.info("Startup event warmup beginning (new summaries only)…")
+    _run_event_fetchers(force=False)
     logger.info("Startup event warmup complete")
 
 
