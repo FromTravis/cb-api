@@ -54,6 +54,12 @@ def index():
     return send_from_directory(".", "cb-policy-dashboard-live.html")
 
 
+@app.get("/image.png")
+def logo():
+    from flask import send_from_directory
+    return send_from_directory(".", "image.png")
+
+
 @app.get("/api/banks")
 def list_banks():
     return jsonify({"banks": [
