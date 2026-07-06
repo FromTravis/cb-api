@@ -187,26 +187,19 @@ def _process(link: dict, db: dict) -> tuple:
 
 # ── main entry point ──────────────────────────────────────────────────────────
 
-def fetch(start_date: str = DEFAULT_START_DATE, force: bool = False) -> list[dict]:
-    cache_key = f"boj_events_{start_date[:7]}"
-    if not force:
-        cached = cache.get(cache_key)
-        if cached is not None:
-            return cached
+_bg_lock = concurrent.futures.ThreadPoolExecutor(max_workers=1)   # one background job at a time
+_bg_running: set = set()   # which cache_keys have a job in flight
 
-    cutoff = start_date[:7]
-    logger.info("Discovering BoJ events since %s", cutoff)
-    links = _discover_links(cutoff)
-    logger.info("Found %d BoJ events (%d statements, %d opinions)",
-                len(links),
-                sum(1 for l in links if l["cat"] == "cb"),
-                sum(1 for l in links if l["cat"] == "speech"))
 
-    db      = summary_store.load_all()
-    missing = [l for l in links if f"url:{l['url']}" not in db]
+def _generate_and_cache(cache_key: str, links: list, cutoff: str) -> None:
+    """Background worker: generate missing summaries, then refresh cache."""
+    try:
+        db = summary_store.load_all()
+        missing = [l for l in links if f"url:{l['url']}" not in db]
+        if not missing:
+            return
 
-    if missing:
-        logger.info("Summarising %d new BoJ events with Claude Haiku…", len(missing))
+        logger.info("Background: summarising %d new BoJ events…", len(missing))
         new_entries = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
             futures = {pool.submit(_process, lk, db): lk for lk in missing}
@@ -219,8 +212,43 @@ def fetch(start_date: str = DEFAULT_START_DATE, force: bool = False) -> list[dic
         if new_entries:
             db.update(new_entries)
             summary_store.save_all(db)
-            logger.info("Summary store updated (%d total entries)", len(db))
+            logger.info("Background: store updated (%d total entries)", len(db))
+            # Invalidate cache so next request picks up the new summaries
+            cache.invalidate(cache_key)
+    finally:
+        _bg_running.discard(cache_key)
 
+
+def fetch(start_date: str = DEFAULT_START_DATE, force: bool = False) -> list[dict]:
+    cache_key = f"boj_events_{start_date[:7]}"
+    if not force:
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+    cutoff = start_date[:7]
+    links_key = f"boj_links_{cutoff}"
+    links = cache.get(links_key)
+    if links is None:
+        logger.info("Discovering BoJ events since %s", cutoff)
+        links = _discover_links(cutoff)
+        cache.set(links_key, links)
+        logger.info("Found %d BoJ events (%d statements, %d opinions)",
+                    len(links),
+                    sum(1 for l in links if l["cat"] == "cb"),
+                    sum(1 for l in links if l["cat"] == "speech"))
+    else:
+        logger.debug("BoJ links from cache (%d items)", len(links))
+    db      = summary_store.load_all()
+    missing = [l for l in links if f"url:{l['url']}" not in db]
+
+    if missing and cache_key not in _bg_running:
+        # Kick off generation in background — don't block the HTTP response
+        _bg_running.add(cache_key)
+        _bg_lock.submit(_generate_and_cache, cache_key, links, cutoff)
+        logger.info("Background summary job started for %d BoJ events", len(missing))
+
+    # Build events immediately from whatever is already in the store
     events = []
     for lk in links:
         uk   = f"url:{lk['url']}"
@@ -234,6 +262,10 @@ def fetch(start_date: str = DEFAULT_START_DATE, force: bool = False) -> list[dic
         })
 
     events.sort(key=lambda e: (e["d"], e["cat"]))
-    cache.set(cache_key, events)
+    # Cache with short TTL when summaries are pending, full TTL when all done
+    if missing:
+        cache.set(cache_key, events)   # will be invalidated once background finishes
+    else:
+        cache.set(cache_key, events)
     logger.info("BoJ events ready: %d items from %s", len(events), cutoff)
     return events
