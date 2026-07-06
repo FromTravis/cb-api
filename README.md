@@ -1,7 +1,7 @@
 # Central Bank Policy Dashboard — Python/Flask Backend
 
-A lightweight data API that fetches live monetary policy data from free public
-sources and serves it to the dashboard frontend.
+A lightweight data API that fetches recent monetary policy decision statements from central banks websites and makes as summary using Claude Haiku.
+Chart data from public sources. 
 
 ---
 
@@ -41,6 +41,8 @@ Flask API  (app.py)
 
 - Python 3.11+
 - A free FRED API key → https://fred.stlouisfed.org/docs/api/api_key.html
+- A ANTHROPIC API key
+
 
 ### 2. Install
 
