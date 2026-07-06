@@ -68,10 +68,14 @@ def fetch(flow: str, key: str, start_date: str = DEFAULT_START_DATE) -> list[dic
         if raw is None:
             continue
         try:
-            iso = period + "-01" if len(period) == 7 else period
-            results.append({"date": iso, "value": float(raw)})
+            value = float(raw)
         except (ValueError, TypeError):
-            pass
+            continue
+        import math
+        if math.isnan(value):   # BIS uses NaN for missing observations
+            continue
+        iso = period + "-01" if len(period) == 7 else period
+        results.append({"date": iso, "value": value})
 
     results.sort(key=lambda r: r["date"])
     logger.debug("BIS %s/%s: %d observations", flow, key, len(results))

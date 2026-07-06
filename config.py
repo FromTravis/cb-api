@@ -92,8 +92,8 @@ CB_CONFIG = {
         "name": "National Bank of Hungary (MNB)",
         "country": "HU", "currency": "HUF", "cpi_target": 3.0,
         "series": {
-            "rate": {"source": "fred", "id": "IRSTCB01HUM156N", "label": "Base rate"},
-            "cpi":  {"source": "fred", "id": "HUNCPIALLMINMEI", "label": "CPI YoY", "transform": "yoy_pct"},
+            "rate": {"source": "bis",  "id": "BIS,WS_CBPOL,1.0|D.HU",    "label": "Base rate",  "frequency": "d"},
+            "cpi":  {"source": "bis",  "id": "BIS,WS_LONG_CPI,1.0|M.HU.771", "label": "CPI YoY"},
             "y2":   {"source": "fred", "id": "IR3TIB01HUM156N", "label": "3M interbank rate"},
             "y10":  {"source": "fred", "id": "IRLTLT01HUM156N", "label": "10Y bond yield"},
             "fx":   {"source": "ecb",  "id": "EXR/M.HUF.EUR.SP00.A", "label": "EUR/HUF"},
