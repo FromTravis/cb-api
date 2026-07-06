@@ -82,7 +82,7 @@ CB_CONFIG = {
             "rate": {"source": "nbp",  "id": "ref", "label": "NBP Reference Rate", "frequency": "d"},
             "cpi":  {"source": "ecb",  "id": "ICP/M.PL.N.000000.4.ANR", "label": "HICP YoY"},
             "y2":   {"source": "fred",     "id": "IR3TIB01PLM156N",        "label": "3M interbank rate"},
-            "y10":  {"source": "eurostat", "id": "irt_lt_mcby_m|geo=PL",     "label": "10Y bond yield"},
+            "y10":  {"source": "fred", "id": "IRLTLT01PLM156N",     "label": "10Y bond yield"},
             "fx":   {"source": "nbp",  "id": "eur", "label": "EUR/PLN", "frequency": "d"},
         }
     },
@@ -108,7 +108,7 @@ CB_CONFIG = {
             "rate": {"source": "bis",  "id": "BIS,WS_CBPOL,1.0|D.RO",       "label": "Policy rate", "frequency": "d"},
             "cpi":  {"source": "bis",  "id": "BIS,WS_LONG_CPI,1.0|M.RO.771", "label": "CPI YoY"},
             "y2":   {"source": "fred", "id": "IR3TIB01ROM156N", "label": "3M interbank rate"},
-            "y10":  {"source": "fred", "id": "IRLTLT01ROM156N", "label": "10Y bond yield"},
+            "y10":  {"source": "ecb",  "id": "IRS/M.RO.L.L40.CI.0000.RON.N.Z", "label": "10Y bond yield"},
             "fx":   {"source": "ecb",  "id": "EXR/D.RON.EUR.SP00.A", "label": "EUR/RON", "frequency": "d"},
         }
     },
