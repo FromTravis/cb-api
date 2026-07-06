@@ -44,7 +44,7 @@ CB_CONFIG = {
             "cpi":  {"source": "ecb",  "id": "HICP/M.U2.N.000000.4D0.ANR", "label": "HICP YoY"},
             "y2":   {"source": "bundesbank", "id": "D.REN.EUR.A610.000000WT0202.A", "label": "2Y Schatz yield",  "frequency": "d"},
             "y10":  {"source": "bundesbank", "id": "D.REN.EUR.A630.000000WT1010.A", "label": "10Y Bund yield",    "frequency": "d"},
-            "fx":   {"source": "fred", "id": "DEXUSEU", "label": "EUR/USD"},
+            "fx":   {"source": "fred", "id": "DEXUSEU", "label": "EUR/USD", "frequency": "d"},
         }
     },
     # EU HICP https://data.ecb.europa.eu/data/datasets/HICP/HICP.M.U2.N.000000.4D0.ANR
