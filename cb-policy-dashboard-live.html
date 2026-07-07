@@ -481,7 +481,7 @@ function buildKPI(meta) {
   const items = [
     {label:'Policy rate',    val:fv(last.rate), sub:src('rate'),  color:seriesColor('rate')},
     {label:'CPI (latest)',   val:fv(last.cpi),  sub:src('cpi'),   color:seriesColor('cpi')},
-    {label:src('label'),  val:fv(last.y2),   sub:src('y2'),    color:seriesColor('y2')},
+    {label: meta?.series?.y2?.label  || '2Y bond yield',  val:fv(last.y2),   sub:src('y2'),    color:seriesColor('y2')},
     {label:'10Y bond yield', val:fv(last.y10),  sub:src('y10'),   color:seriesColor('y10')},
   ];
   if (last.fx != null) {
