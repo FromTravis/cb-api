@@ -230,7 +230,7 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
 </div>
 
 <div class="footer-note">
-  Live data: FRED (St. Louis Fed) · ECB Data Portal. Events are curated and illustrative. Not financial advice.
+  Live data: FRED (St. Louis Fed) · ECB Data Portal · BIS · Central Banks websites. Events are curated and illustrative. Not financial advice.
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -481,7 +481,7 @@ function buildKPI(meta) {
   const items = [
     {label:'Policy rate',    val:fv(last.rate), sub:src('rate'),  color:seriesColor('rate')},
     {label:'CPI (latest)',   val:fv(last.cpi),  sub:src('cpi'),   color:seriesColor('cpi')},
-    {label:'2Y bond yield',  val:fv(last.y2),   sub:src('y2'),    color:seriesColor('y2')},
+    {label:src('label'),  val:fv(last.y2),   sub:src('y2'),    color:seriesColor('y2')},
     {label:'10Y bond yield', val:fv(last.y10),  sub:src('y10'),   color:seriesColor('y10')},
   ];
   if (last.fx != null) {
