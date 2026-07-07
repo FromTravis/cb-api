@@ -137,6 +137,13 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
 .badge { font-size:10px; font-weight:500; border-radius:20px; padding:3px 10px; white-space:nowrap; }
 
 .footer-note { font-size:11px; color:var(--text3); margin-top:20px; border-top:0.5px solid var(--border); padding-top:12px; }
+.analysis-card { background:var(--surface); border-radius:12px; padding:14px 16px; box-shadow:var(--shadow); margin-bottom:14px; }
+.analysis-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.analysis-title { font-size:12px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:0.05em; }
+.analysis-dates { font-size:11px; color:var(--text3); }
+.analysis-body { font-size:13px; color:var(--text2); line-height:1.6; }
+.analysis-loading { font-size:12px; color:var(--text3); font-style:italic; }
+.analysis-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent); margin-right:6px; flex-shrink:0; }
 @media (max-width:600px){.kpi-row{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
@@ -212,6 +219,14 @@ select.cb-sel { font-size:13px; font-weight:500; padding:7px 12px; border-radius
   </div>
 
   <div class="detail-card" id="detail-card"></div>
+  <div class="analysis-card" id="analysis-card" style="display:none">
+    <div class="analysis-header">
+      <span class="analysis-dot"></span>
+      <span class="analysis-title">What changed since the last meeting?</span>
+      <span class="analysis-dates" id="analysis-dates"></span>
+    </div>
+    <div id="analysis-body" class="analysis-body"></div>
+  </div>
 </div>
 
 <div class="footer-note">
@@ -690,6 +705,29 @@ function toggleSeries(key) {
   document.getElementById('leg-'+key)?.classList.toggle('dim',hiddenSeries.has(key));
 }
 
+/* ══════════ ANALYSIS CARD ══════════ */
+async function loadAnalysis(cbKey) {
+  const card  = document.getElementById('analysis-card');
+  const body  = document.getElementById('analysis-body');
+  const dates = document.getElementById('analysis-dates');
+  // Hide and show spinner while loading
+  card.style.display = 'block';
+  body.innerHTML = '<span class="analysis-loading">Analysing latest statements…</span>';
+  dates.textContent = '';
+  try {
+    const d = await fetch(`${apiBase()}/api/analysis/${cbKey}`).then(r=>r.json());
+    if (!d.analysis) {
+      card.style.display = 'none';
+      return;
+    }
+    body.textContent = d.analysis;
+    if (d.last_date && d.prev_date)
+      dates.textContent = `${d.prev_date} → ${d.last_date}`;
+  } catch(_) {
+    card.style.display = 'none';
+  }
+}
+
 function buildRangeSelector(data) {
   const years=[...new Set(data.map(r=>r.date.slice(0,4)))].sort();
   const sel=document.getElementById('range-sel');
@@ -742,6 +780,7 @@ async function switchCB(key) {
     buildLegend();
     buildChart(getFilteredData());
     buildTimeline(activeEvents);
+    loadAnalysis(key);
 
     setPill(result.partial?'warn':'ok', result.partial?`partial · ${result.count} months`:`live · ${result.count} months`);
     showMain();

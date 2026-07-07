@@ -116,6 +116,70 @@ def health():
     return jsonify({"ok": all_ok, "checks": checks})
 
 
+@app.get("/api/analysis/<cb_key>")
+def get_analysis(cb_key):
+    """Compare the last two CB statements using Claude Haiku."""
+    from config import ANTHROPIC_API_KEY
+    _, err = _cb_or_404(cb_key)
+    if err:
+        return err
+
+    fetcher_map = {
+        "fed": "fetchers.fed_events", "ecb": "fetchers.ecb_events",
+        "boe": "fetchers.boe_events", "boj": "fetchers.boj_events",
+        "pol": "fetchers.nbp_events", "hun": "fetchers.mnb_events",
+        "cze": "fetchers.cnb_events", "rom": "fetchers.bnr_events",
+    }
+    if cb_key not in fetcher_map:
+        return jsonify({"analysis": None})
+
+    import importlib
+    mod = importlib.import_module(fetcher_map[cb_key])
+    events = mod.fetch(start_date=DEFAULT_START_DATE, force=False)
+
+    # Need at least 2 events with real summaries
+    real = [e for e in events if e.get("body") and not e["body"].startswith("[")]
+    if len(real) < 2:
+        return jsonify({"analysis": None, "reason": "Not enough summaries yet"})
+
+    last, prev = real[-1], real[-2]
+
+    # Cache key based on both summaries so it only regenerates when content changes
+    import hashlib, cache as cache_mod
+    cache_key = f"analysis_{cb_key}_" + hashlib.md5(
+        (last["body"] + prev["body"]).encode()
+    ).hexdigest()[:12]
+    cached = cache_mod.get(cache_key)
+    if cached:
+        return jsonify({"analysis": cached})
+
+    if not ANTHROPIC_API_KEY:
+        return jsonify({"analysis": None, "reason": "API key not set"})
+
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        prompt = (
+            f"You are analysing two consecutive central bank policy statements.\n\n"
+            f"PREVIOUS statement ({prev['d']}):\n{prev['body']}\n\n"
+            f"LATEST statement ({last['d']}):\n{last['body']}\n\n"
+            f"In 2-3 sentences, analyse what changed between the two meetings: "
+            f"rate action, policy stance shift, or key economic assessment differences. "
+            f"Be concise and factual."
+        )
+        resp = client.messages.create(
+            model="claude-haiku-4-5",
+            max_tokens=200,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        analysis = resp.content[0].text.strip()
+        cache_mod.set(cache_key, analysis)
+        return jsonify({"analysis": analysis, "last_date": last["d"], "prev_date": prev["d"]})
+    except Exception as e:
+        logger.error("Analysis failed for %s: %s", cb_key, e)
+        return jsonify({"analysis": None, "error": str(e)})
+
+
 @app.get("/api/events/<cb_key>")
 def get_events(cb_key):
     _, err = _cb_or_404(cb_key)
