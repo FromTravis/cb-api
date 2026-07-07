@@ -55,7 +55,7 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "boe", "id": "IUDBEDR", "label": "Bank Rate",             "frequency": "d"},
             "cpi":  {"source": "ons", "id": "D7G7",   "label": "CPI YoY"},
-            "y2":   {"source": "boe", "id": "IUDSNPY", "label": "2Y Gilt nominal yield", "frequency": "d"},
+            "y2":   {"source": "boe", "id": "IUDSNPY", "label": "5Y Gilt nominal yield", "frequency": "d"},
             "y10":  {"source": "boe", "id": "IUDMNPY", "label": "10Y Gilt nominal yield","frequency": "d"},
             "fx":   {"source": "boe", "id": "XUDLERS", "label": "GBP/EUR",               "frequency": "d"},
         }
@@ -81,8 +81,8 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "nbp",  "id": "ref", "label": "NBP Reference Rate", "frequency": "d"},
             "cpi":  {"source": "ecb",  "id": "ICP/M.PL.N.000000.4.ANR", "label": "HICP YoY"},
-            "y2":   {"source": "fred",     "id": "IR3TIB01PLM156N",        "label": "3M interbank rate"},
-            "y10":  {"source": "fred", "id": "IRLTLT01PLM156N",     "label": "10Y bond yield"},
+            "y2":   {"source": "fred",  "id": "IR3TIB01PLM156N",  "label": "3M interbank rate"},
+            "y10":  {"source": "fred", "id": "IRLTLT01PLM156N",  "label": "10Y bond yield"},
             "fx":   {"source": "nbp",  "id": "eur", "label": "EUR/PLN", "frequency": "d"},
         }
     },
