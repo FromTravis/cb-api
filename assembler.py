@@ -142,11 +142,10 @@ def assemble(cb_key, start_date=DEFAULT_START_DATE):
     series_cfg = cfg["series"]
     has_fx     = "fx" in series_cfg
 
-    # Output granularity is determined by CORE series only — fx doesn't flip monthly
-    # CBs to daily just because it has a daily source.
+    # Daily mode if any CORE series OR the fx series has frequency "d"
     daily = any(
         series_cfg[sk].get("frequency") == "d"
-        for sk in CORE_SERIES
+        for sk in list(CORE_SERIES) + ["fx"]
         if sk in series_cfg
     )
     to_index = _to_day_index if daily else _to_ym_index
