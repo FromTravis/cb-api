@@ -205,7 +205,10 @@ def fetch(start_date: str = DEFAULT_START_DATE, force: bool = False) -> list[dic
     cutoff = start_date[:7]
 
     # Cache link list separately (avoids re-fetching paginated API on every request)
+    # When force=True (daily refresh), clear it so new meetings are picked up.
     links_key  = f"nbp_links_v2_{cutoff}"
+    if force:
+        cache.invalidate(links_key)
     posts_by_cat = cache.get(links_key)
     if posts_by_cat is None:
         logger.info("Fetching NBP MPC posts since %s", cutoff)
