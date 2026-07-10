@@ -314,12 +314,21 @@ def _run_event_fetchers(force=False):
 
 
 def _events_startup_warmup():
-    """On startup: pre-generate any missing summaries in the background.
-    Runs silently — the HTTP endpoint stays responsive even while this runs."""
+    """On startup: pre-generate summaries AND pre-download slow data sources."""
     time.sleep(5)   # let the server finish initialising
-    logger.info("Startup event warmup beginning (new summaries only)…")
+    logger.info("Startup warmup beginning…")
+
+    # Pre-download the Eurostat consumer survey zip (28MB) so the first
+    # user request for HUN/POL/CZE/ROM/ECB doesn't block for 90 seconds.
+    try:
+        from fetchers.eurostat_consumer import _download_all
+        _download_all(start_date=DEFAULT_START_DATE)
+        logger.info("Eurostat consumer survey pre-cached")
+    except Exception as e:
+        logger.warning("Eurostat consumer pre-cache failed: %s", e)
+
     _run_event_fetchers(force=False)
-    logger.info("Startup event warmup complete")
+    logger.info("Startup warmup complete")
 
 
 def _events_daily_refresh():

@@ -202,9 +202,13 @@ def assemble(cb_key, start_date=DEFAULT_START_DATE):
             row[sk] = round(v, 4 if sk == "fx" else 2) if v is not None else None
         rows.append(row)
 
-    if rows and not fetch_errors:
+    # Cache as long as core series have no errors — optional series (inf_exp)
+    # failures should not block caching the rest of the data.
+    optional_series = {"inf_exp", "fx"}
+    core_errors = {k: v for k, v in fetch_errors.items() if k not in optional_series}
+    if rows and not core_errors:
         cache.set(cache_key, rows)
-    elif fetch_errors:
+    elif core_errors:
         logger.warning("Partial data for %s — not caching. Errors: %s", cb_key, fetch_errors)
 
     return rows
