@@ -44,7 +44,7 @@ CB_CONFIG = {
             "cpi":  {"source": "ecb",  "id": "HICP/M.U2.N.000000.4D0.ANR", "label": "HICP YoY"},
             "y2":      {"source": "bundesbank", "id": "D.REN.EUR.A610.000000WT0202.A", "label": "2Y Schatz yield",  "frequency": "d"},
             "y10":     {"source": "bundesbank", "id": "D.REN.EUR.A630.000000WT1010.A", "label": "10Y Bund yield",    "frequency": "d"},
-            "inf_exp": {"source": "ecb",        "id": "CES/M.Z18.ALL.T.C1120.NUM_VAR.WM", "label": "1Y Inflation exp."},
+            "inf_exp": {"source": "eurostat_consumer", "id": "EA", "label": "Infl. exp. balance"},
         }
     },
     # EU HICP https://data.ecb.europa.eu/data/datasets/HICP/HICP.M.U2.N.000000.4D0.ANR
@@ -81,8 +81,9 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "nbp",  "id": "ref", "label": "NBP Reference Rate", "frequency": "d"},
             "cpi":  {"source": "ecb",  "id": "ICP/M.PL.N.000000.4.ANR", "label": "HICP YoY"},
-            "y2":   {"source": "fred",  "id": "IR3TIB01PLM156N",  "label": "3M interbank rate"},
-            "y10":  {"source": "fred", "id": "IRLTLT01PLM156N",  "label": "10Y bond yield"},
+            "y2":      {"source": "fred",              "id": "IR3TIB01PLM156N", "label": "3M interbank rate"},
+            "y10":     {"source": "fred",              "id": "IRLTLT01PLM156N", "label": "10Y bond yield"},
+            "inf_exp": {"source": "eurostat_consumer", "id": "PL",              "label": "Infl. exp. balance"},
         }
     },
 
@@ -93,8 +94,9 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "bis",  "id": "BIS,WS_CBPOL,1.0|D.HU",    "label": "Base rate",  "frequency": "d"},
             "cpi":  {"source": "bis",  "id": "BIS,WS_LONG_CPI,1.0|M.HU.771", "label": "CPI YoY"},
-            "y2":   {"source": "fred", "id": "IR3TIB01HUM156N", "label": "3M interbank rate"},
-            "y10":  {"source": "fred", "id": "IRLTLT01HUM156N", "label": "10Y bond yield"},
+            "y2":      {"source": "fred",              "id": "IR3TIB01HUM156N", "label": "3M interbank rate"},
+            "y10":     {"source": "fred",              "id": "IRLTLT01HUM156N", "label": "10Y bond yield"},
+            "inf_exp": {"source": "eurostat_consumer", "id": "HU",              "label": "Infl. exp. balance"},
         }
     },
 
@@ -105,8 +107,9 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "bis",  "id": "BIS,WS_CBPOL,1.0|D.RO",       "label": "Policy rate", "frequency": "d"},
             "cpi":  {"source": "bis",  "id": "BIS,WS_LONG_CPI,1.0|M.RO.771", "label": "CPI YoY"},
-            "y2":   {"source": "fred", "id": "IR3TIB01ROM156N", "label": "3M interbank rate"},
-            "y10":  {"source": "ecb",  "id": "IRS/M.RO.L.L40.CI.0000.RON.N.Z", "label": "10Y bond yield"},
+            "y2":      {"source": "fred",              "id": "IR3TIB01ROM156N",              "label": "3M interbank rate"},
+            "y10":     {"source": "ecb",               "id": "IRS/M.RO.L.L40.CI.0000.RON.N.Z", "label": "10Y bond yield"},
+            "inf_exp": {"source": "eurostat_consumer", "id": "RO",                             "label": "Infl. exp. balance"},
         }
     },
 
@@ -117,8 +120,9 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "bis",  "id": "BIS,WS_CBPOL,1.0|M.CZ",       "label": "2W repo rate"},
             "cpi":  {"source": "bis",  "id": "BIS,WS_LONG_CPI,1.0|M.CZ.771", "label": "CPI YoY"},
-            "y2":   {"source": "fred", "id": "IR3TIB01CZM156N", "label": "3M interbank rate"},
-            "y10":  {"source": "fred", "id": "IRLTLT01CZM156N", "label": "10Y bond yield"},
+            "y2":      {"source": "fred",              "id": "IR3TIB01CZM156N", "label": "3M interbank rate"},
+            "y10":     {"source": "fred",              "id": "IRLTLT01CZM156N", "label": "10Y bond yield"},
+            "inf_exp": {"source": "eurostat_consumer", "id": "CZ",              "label": "Infl. exp. balance"},
         }
     },
 }
