@@ -493,10 +493,6 @@ function buildKPI(meta) {
     {label: meta?.series?.y2?.label  || '2Y bond yield',  val:fv(last.y2),   sub:src('y2'),    color:seriesColor('y2')},
     {label:'10Y bond yield', val:fv(last.y10),  sub:src('y10'),   color:seriesColor('y10')},
   ];
-  if (last.fx != null) {
-    const fxLabel = currentMeta?.fx_label || SERIES_DEF.fx.label;
-    items.push({label: fxLabel, val: last.fx.toFixed(4), sub: src('fx'), color: seriesColor('fx')});
-  }
   document.getElementById('kpi-row').innerHTML = items.map(k=>
     `<div class="kpi"><div class="kpi-label">${k.label}</div><div class="kpi-val" style="color:${k.color}">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`
   ).join('');
