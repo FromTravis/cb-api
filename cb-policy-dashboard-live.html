@@ -526,9 +526,15 @@ function buildChart(data) {
   const dark=isDark(), gridCol=dark?'#2c2c2a':'#e1e0d9', tickCol=dark?'#898781':'#888780';
   const hasFX = data.some(r => r.fx != null);
 
-  // Left axis: rate / cpi / y2 / y10
+  // inf_exp: put on LEFT axis when values are %-scale (<15), RIGHT when balance-score (≥15)
+  const infExpVals = data.map(r=>r.inf_exp).filter(v=>v!=null);
+  const infExpOnLeft = infExpVals.length > 0 && Math.max(...infExpVals) < 15;
+
+  // Left axis: rate / cpi / y2 / y10 (+ inf_exp when %-scale)
   let ymax=0;
-  data.forEach(r => ['rate','cpi','y2','y10'].forEach(k=>{if(r[k]!=null&&r[k]>ymax)ymax=r[k];}));
+  const leftKeys = ['rate','cpi','y2','y10'];
+  if (infExpOnLeft) leftKeys.push('inf_exp');
+  data.forEach(r => leftKeys.forEach(k=>{if(r[k]!=null&&r[k]>ymax)ymax=r[k];}));
   ymax=Math.ceil(ymax/5)*5+2;
 
   // Right axis: fx — auto-range with a 5% padding
@@ -546,7 +552,7 @@ function buildChart(data) {
     pointRadius:0, pointHoverRadius:5, tension:0.25,
     hidden: hiddenSeries.has(k) || (k === 'fx' && !hasFX),
     spanGaps:true,
-    yAxisID: SERIES_DEF[k].axis === 'right' ? 'yRight' : 'y',
+    yAxisID: SERIES_DEF[k].axis === 'right' && !(k === 'inf_exp' && infExpOnLeft) ? 'yRight' : 'y',
   });
   chart = new Chart(canvas,{
     type:'line',
@@ -574,12 +580,11 @@ function buildChart(data) {
         x:{grid:{color:gridCol,lineWidth:0.5},ticks:{color:tickCol,font:{size:11},maxTicksLimit:14},border:{color:gridCol}},
         y:{grid:{color:gridCol,lineWidth:0.5},ticks:{color:tickCol,font:{size:11},callback:v=>v.toFixed(0)+'%'},border:{color:gridCol},min:0,max:ymax},
         yRight:{
-          type:'linear', position:'right', display: hasFX ? true : false,
-          min: hasFX ? fxMin-fxPad : undefined,
-          max: hasFX ? fxMax+fxPad : undefined,
+          type:'linear', position:'right',
+          display: hasFX || (infExpVals.length > 0 && !infExpOnLeft),
           grid:{drawOnChartArea:false},
-          ticks:{color:seriesColor('fx'),font:{size:11},
-            callback:v => v >= 100 ? v.toFixed(2) : v >= 10 ? v.toFixed(3) : v.toFixed(4)},
+          ticks:{color:seriesColor('inf_exp'),font:{size:11},
+            callback:v => v.toFixed(1)},
           border:{color:gridCol},
         }
       }
