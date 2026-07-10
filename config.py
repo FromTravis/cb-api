@@ -29,8 +29,9 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "fred", "id": "DFF",         "label": "Fed funds rate (effective, daily)", "frequency": "d"},
             "cpi":  {"source": "fred", "id": "CPIAUCSL",    "label": "CPI All Urban Consumers", "transform": "yoy_pct"},
-            "y2":   {"source": "fred", "id": "DGS2",        "label": "2Y Treasury yield", "frequency": "d"},
-            "y10":  {"source": "fred", "id": "DGS10",       "label": "10Y Treasury yield", "frequency": "d"},
+            "y2":      {"source": "fred", "id": "DGS2",        "label": "2Y Treasury yield", "frequency": "d"},
+            "y10":     {"source": "fred", "id": "DGS10",       "label": "10Y Treasury yield", "frequency": "d"},
+            "inf_exp": {"source": "fred", "id": "EXPINF1YR",   "label": "1Y Inflation exp."},
         }
     },
 
@@ -41,8 +42,9 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "ecb",  "id": "FM/B.U2.EUR.4F.KR.MRR_FR.LEV",  "label": "ECB Main refinancing rate"},
             "cpi":  {"source": "ecb",  "id": "HICP/M.U2.N.000000.4D0.ANR", "label": "HICP YoY"},
-            "y2":   {"source": "bundesbank", "id": "D.REN.EUR.A610.000000WT0202.A", "label": "2Y Schatz yield",  "frequency": "d"},
-            "y10":  {"source": "bundesbank", "id": "D.REN.EUR.A630.000000WT1010.A", "label": "10Y Bund yield",    "frequency": "d"},
+            "y2":      {"source": "bundesbank", "id": "D.REN.EUR.A610.000000WT0202.A", "label": "2Y Schatz yield",  "frequency": "d"},
+            "y10":     {"source": "bundesbank", "id": "D.REN.EUR.A630.000000WT1010.A", "label": "10Y Bund yield",    "frequency": "d"},
+            "inf_exp": {"source": "ecb",        "id": "CES/M.Z18.ALL.T.C1120.NUM_VAR.WM", "label": "1Y Inflation exp."},
         }
     },
     # EU HICP https://data.ecb.europa.eu/data/datasets/HICP/HICP.M.U2.N.000000.4D0.ANR
@@ -53,8 +55,9 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "boe", "id": "IUDBEDR", "label": "Bank Rate",             "frequency": "d"},
             "cpi":  {"source": "ons", "id": "D7G7",   "label": "CPI YoY"},
-            "y2":   {"source": "boe", "id": "IUDSNPY", "label": "5Y Gilt nominal yield", "frequency": "d"},
-            "y10":  {"source": "boe", "id": "IUDMNPY", "label": "10Y Gilt nominal yield","frequency": "d"},
+            "y2":      {"source": "boe",           "id": "IUDSNPY",          "label": "5Y Gilt nominal yield", "frequency": "d"},
+            "y10":     {"source": "boe",           "id": "IUDMNPY",          "label": "10Y Gilt nominal yield","frequency": "d"},
+            "inf_exp": {"source": "boe_inflation", "id": "long-run-median",  "label": "1Y Inflation exp."},
         }
     },
 
@@ -65,8 +68,9 @@ CB_CONFIG = {
         "series": {
             "rate": {"source": "bis",  "id": "BIS,WS_CBPOL,1.0|D.JP", "label": "Policy rate", "frequency": "d"},
             "cpi":  {"source": "bis",  "id": "BIS,WS_LONG_CPI,1.0|M.JP.771", "label": "CPI YoY"},
-            "y2":   {"source": "fred", "id": "IR3TIB01JPM156N", "label": "3M interbank rate"},
-            "y10":  {"source": "fred", "id": "IRLTLT01JPM156N", "label": "10Y JGB yield"},
+            "y2":      {"source": "fred",     "id": "IR3TIB01JPM156N", "label": "3M interbank rate"},
+            "y10":     {"source": "fred",     "id": "IRLTLT01JPM156N", "label": "10Y JGB yield"},
+            "inf_exp": {"source": "nakajima", "id": "1Year",           "label": "1Y Inflation exp."},
         }
     },
 

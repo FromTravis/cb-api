@@ -332,11 +332,12 @@ const EVENTS_DB = {
 
 /* ══════════ COLOURS ══════════ */
 const SERIES_DEF = {
-  rate:{ label:'Policy rate',    lc:'#2a78d6', dc:'#3987e5' },
-  cpi: { label:'CPI inflation',  lc:'#d03030', dc:'#e66767' },
-  y2:  { label:'2Y / ST yield',  lc:'#1baf7a', dc:'#1baf7a' },
-  y10: { label:'10Y bond yield', lc:'#c98500', dc:'#eda100' },
-  fx:  { label:'FX rate',        lc:'#7c3aed', dc:'#a78bfa', axis:'right' },
+  rate:    { label:'Policy rate',       lc:'#2a78d6', dc:'#3987e5' },
+  cpi:     { label:'CPI inflation',     lc:'#d03030', dc:'#e66767' },
+  y2:      { label:'2Y / ST yield',     lc:'#1baf7a', dc:'#1baf7a' },
+  y10:     { label:'10Y bond yield',    lc:'#c98500', dc:'#eda100' },
+  fx:      { label:'FX rate',           lc:'#7c3aed', dc:'#a78bfa', axis:'right' },
+  inf_exp: { label:'1Y Inflation exp.', lc:'#e67e22', dc:'#f39c12' },
 };
 const CAT = {
   cb:    { label:'CB decision', lb:'#dbeafe', lt:'#1e40af', db:'#1e3a5f', dt:'#93c5fd' },
@@ -493,6 +494,9 @@ function buildKPI(meta) {
     {label: meta?.series?.y2?.label  || '2Y bond yield',  val:fv(last.y2),   sub:src('y2'),    color:seriesColor('y2')},
     {label:'10Y bond yield', val:fv(last.y10),  sub:src('y10'),   color:seriesColor('y10')},
   ];
+  if (last.inf_exp != null) {
+    items.push({label: meta?.series?.inf_exp?.label || '1Y Inflation exp.', val: fv(last.inf_exp), sub: src('inf_exp'), color: seriesColor('inf_exp')});
+  }
   document.getElementById('kpi-row').innerHTML = items.map(k=>
     `<div class="kpi"><div class="kpi-label">${k.label}</div><div class="kpi-val" style="color:${k.color}">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`
   ).join('');
@@ -501,7 +505,8 @@ function buildKPI(meta) {
 /* ══════════ RENDER: LEGEND ══════════ */
 function buildLegend() {
   document.getElementById('legend').innerHTML = Object.entries(SERIES_DEF)
-    .filter(([k]) => k !== 'fx' || currentData.some(r => r.fx != null))
+    .filter(([k]) => (k !== 'fx'      || currentData.some(r => r.fx      != null))
+                  && (k !== 'inf_exp' || currentData.some(r => r.inf_exp != null)))
     .map(([k,v]) => {
       const label = k === 'fx' ? (currentMeta?.fx_label || v.label) : v.label;
       return `<div class="leg-item${hiddenSeries.has(k)?' dim':''}" id="leg-${k}" onclick="toggleSeries('${k}')">

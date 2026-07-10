@@ -89,6 +89,16 @@ def _fetch_series(sc, start_date, frequency_override=None):
         raw = ecb_fetch(sid, start_date=start_date)
         if transform in ("invert",):
             raw = _apply_transform(raw, transform)
+    elif src == "boe_inflation":
+        from fetchers.boe_inflation import fetch as boe_inflation_fetch
+        raw = boe_inflation_fetch(sid, start_date=start_date)
+        if transform:
+            raw = _apply_transform(raw, transform)
+    elif src == "nakajima":
+        from fetchers.nakajima import fetch as nakajima_fetch
+        raw = nakajima_fetch(sid, start_date=start_date)
+        if transform:
+            raw = _apply_transform(raw, transform)
     elif src == "bis":
         from fetchers.bis import fetch as bis_fetch
         # id format: "flow|key", e.g. "BIS,WS_CBPOL,1.0|D.JP"
@@ -139,8 +149,9 @@ def assemble(cb_key, start_date=DEFAULT_START_DATE):
     if cfg is None:
         raise ValueError(f"Unknown central bank: {cb_key!r}")
 
-    series_cfg = cfg["series"]
-    has_fx     = "fx" in series_cfg
+    series_cfg  = cfg["series"]
+    has_fx      = "fx"      in series_cfg
+    has_inf_exp = "inf_exp" in series_cfg
 
     # Daily mode if any CORE series OR the fx series has frequency "d"
     daily = any(
@@ -152,7 +163,7 @@ def assemble(cb_key, start_date=DEFAULT_START_DATE):
 
     raw_indices, fetch_errors = {}, {}
 
-    all_keys = list(CORE_SERIES) + (["fx"] if has_fx else [])
+    all_keys = list(CORE_SERIES) + (["fx"] if has_fx else []) + (["inf_exp"] if has_inf_exp else [])
 
     for sk in all_keys:
         sc = series_cfg.get(sk)
