@@ -31,7 +31,7 @@ CB_CONFIG = {
             "cpi":  {"source": "fred", "id": "CPIAUCSL",    "label": "CPI All Urban Consumers", "transform": "yoy_pct"},
             "y2":      {"source": "fred", "id": "DGS2",        "label": "2Y Treasury yield", "frequency": "d"},
             "y10":     {"source": "fred", "id": "DGS10",       "label": "10Y Treasury yield", "frequency": "d"},
-            "inf_exp": {"source": "fred", "id": "EXPINF1YR",   "label": "1Y Inflation exp."},
+            "inf_exp": {"source": "nyfed_sce", "id": "median_1y", "label": "1Y Inflation exp. (SCE)"},
         }
     },
 

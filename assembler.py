@@ -89,6 +89,11 @@ def _fetch_series(sc, start_date, frequency_override=None):
         raw = ecb_fetch(sid, start_date=start_date)
         if transform in ("invert",):
             raw = _apply_transform(raw, transform)
+    elif src == "nyfed_sce":
+        from fetchers.nyfed_sce import fetch as nyfed_fetch
+        raw = nyfed_fetch(sid, start_date=start_date)
+        if transform:
+            raw = _apply_transform(raw, transform)
     elif src == "eurostat_consumer":
         from fetchers.eurostat_consumer import fetch as ec_fetch
         raw = ec_fetch(sid, start_date=start_date)
