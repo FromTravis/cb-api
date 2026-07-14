@@ -5,10 +5,10 @@ from fetchers.bls import _to_yoy_pct
 
 
 class BLSFetcherTests(unittest.TestCase):
-    def test_fed_cpi_uses_bls_series(self):
+    def test_fed_cpi_uses_fred_series(self):
         fed_cpi = CB_CONFIG["fed"]["series"]["cpi"]
-        self.assertEqual(fed_cpi["source"], "bls")
-        self.assertEqual(fed_cpi["id"], "CUUR0000SA0")
+        self.assertEqual(fed_cpi["source"], "fred")
+        self.assertEqual(fed_cpi["id"], "CUURA000SA0")
         self.assertEqual(fed_cpi["transform"], "yoy_pct")
 
     def test_yoy_pct_transformation_uses_prior_year_value(self):

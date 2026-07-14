@@ -28,7 +28,7 @@ CB_CONFIG = {
         "country": "US", "currency": "USD", "cpi_target": 2.0,
         "series": {
             "rate": {"source": "fred", "id": "DFF",         "label": "Fed funds rate (effective, daily)", "frequency": "d"},
-            "cpi":  {"source": "bls", "id": "CUUR0000SA0", "label": "CPI All items, not seasonally adjusted", "transform": "yoy_pct"},
+            "cpi":  {"source": "fred", "id": "CUURA000SA0", "label": "CPI All items", "transform": "yoy_pct"},
             "y2":      {"source": "fred", "id": "DGS2",        "label": "2Y Treasury yield", "frequency": "d"},
             "y10":     {"source": "fred", "id": "DGS10",       "label": "10Y Treasury yield", "frequency": "d"},
             "inf_exp": {"source": "nyfed_sce", "id": "median_1y", "label": "1Y Inflation exp. (SCE)"},
