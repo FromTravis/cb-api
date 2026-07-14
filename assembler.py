@@ -85,6 +85,9 @@ def _fetch_series(sc, start_date, frequency_override=None):
         raw = fred_fetch(sid, transform=fred_transform, start_date=start_date, frequency=freq)
         if transform == "invert":
             raw = _apply_transform(raw, "invert")
+    elif src == "bls":
+        from fetchers.bls import fetch as bls_fetch
+        raw = bls_fetch(sid, transform=transform, start_date=start_date, frequency=freq)
     elif src == "ecb":
         raw = ecb_fetch(sid, start_date=start_date)
         if transform in ("invert",):
