@@ -2,7 +2,7 @@
 
 A lightweight data API that fetches recent monetary policy decision statements from central banks websites and makes as summary using Claude Haiku.
 Chart data from public sources. 
-
+https://bekindrewind.up.railway.app
 ---
 
 ## Architecture
